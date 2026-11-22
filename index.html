@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>1~12월 테트리스 & AI 에이전트</title>
+  <title>1~12월 테트리스 사계 & AI 에이전트</title>
   <style>
     :root {
       --bg: #0d1117;
@@ -62,25 +62,27 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
       padding: 7px 10px;
       margin-bottom: 8px;
       border-radius: 8px;
       background: rgba(22, 27, 34, 0.92);
       border: 1px solid var(--panel-border);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
     }
 
     .stage-name {
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stage-goal {
       color: var(--accent-hover);
       font-weight: 700;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
     .overlay {
@@ -164,7 +166,7 @@
     }
 
     .sidebar {
-      width: 248px;
+      width: 256px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -233,6 +235,7 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
+      gap: 8px;
       margin-bottom: 7px;
     }
 
@@ -242,13 +245,15 @@
 
     .stat-label {
       color: var(--muted);
-      font-size: 0.86rem;
+      font-size: 0.85rem;
+      white-space: nowrap;
     }
 
     .stat-value {
-      font-size: 1.08rem;
+      font-size: 1.02rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
+      text-align: right;
     }
 
     .mini-grid {
@@ -375,7 +380,7 @@
   <div class="app">
     <div class="board-container">
       <div class="stage-banner">
-        <span id="stageName" class="stage-name">❄️ 1월 · 새해 설원</span>
+        <span id="stageName" class="stage-name">🔥 1월 · 화롯가에서</span>
         <span id="stageGoal" class="stage-goal">0 / 10 라인</span>
       </div>
       <canvas id="board" width="300" height="600"></canvas>
@@ -402,7 +407,7 @@
             <span>끔</span>
           </label>
         </div>
-        <p id="audioHint" class="audio-hint">화면 클릭 또는 키 입력 시 월별 음악이 재생됩니다.</p>
+        <p id="audioHint" class="audio-hint">화면 클릭 또는 키 입력 시 테트리스 풍 테마 음악이 재생됩니다.</p>
       </div>
 
       <div class="card">
@@ -424,7 +429,7 @@
         <div class="card-title"><span>스테이지 & 기록</span></div>
         <div class="stat-row">
           <span class="stat-label">현재 스테이지</span>
-          <span id="stageLabel" class="stat-value">1월</span>
+          <span id="stageLabel" class="stat-value">1월 · 화롯가에서</span>
         </div>
         <div class="stat-row">
           <span class="stat-label">스테이지 라인</span>
@@ -655,236 +660,247 @@
     const LINE_SCORES = [0, 100, 300, 500, 800];
 
     const NOTE = {
-      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
-      C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
-      C6: 1046.50,
+      E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Gs4: 415.30, A4: 440.00, B4: 493.88,
+      C5: 523.25, Cs5: 554.37, D5: 587.33, Ds5: 622.25, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00,
       REST: 0,
     };
 
-    // 1~12월 + 보너스 2단계(2배 대형 블록, 2배 소형 블록) 정의
+    // 1~12월 사계 테마를 테트리스(Korobeiniki) 풍 8비트 스텝 리듬으로 재해석 + 보너스 2단계
     const STAGES = [
       {
         id: 'jan',
-        shortName: '1월',
-        bannerTitle: '❄️ 1월 · 새해 설원',
+        shortName: '1월 · 화롯가에서',
+        bannerTitle: '🔥 1월 · 화롯가에서',
         targetLines: 10,
         dropInterval: 720,
         tempo: 118,
-        wave: 'sine',
-        bgTop: '#0d2238',
-        bgBottom: '#07111e',
-        accentColor: '#7dd3fc',
-        motif: '❄️',
+        wave: 'triangle',
+        bgTop: '#361b14',
+        bgBottom: '#140907',
+        accentColor: '#fb923c',
+        motif: '🔥',
+        // 한겨울 난롯가의 서정성 + 테트리스식 8분음표 스텝
         melody: [
-          ['E5', 1], ['D5', 1], ['C5', 1], ['D5', 1],
-          ['E5', 1], ['E5', 1], ['E5', 2],
-          ['D5', 1], ['D5', 1], ['D5', 2],
-          ['E5', 1], ['G5', 1], ['G5', 2],
+          ['E5', 1], ['B4', 0.5], ['C5', 0.5], ['D5', 1], ['C5', 0.5], ['B4', 0.5],
+          ['A4', 1], ['C5', 0.5], ['E5', 0.5], ['D5', 1], ['C5', 1],
+          ['B4', 1], ['C5', 0.5], ['D5', 0.5], ['E5', 1], ['D5', 1],
+          ['C5', 1], ['A4', 1], ['A4', 1.5], ['REST', 0.5],
         ],
       },
       {
         id: 'feb',
-        shortName: '2월',
-        bannerTitle: '💘 2월 · 겨울 밤하늘',
+        shortName: '2월 · 사육제',
+        bannerTitle: '🎭 2월 · 사육제',
         targetLines: 20,
         dropInterval: 670,
-        tempo: 122,
+        tempo: 146,
         wave: 'triangle',
-        bgTop: '#241438',
-        bgBottom: '#10091c',
+        bgTop: '#36132c',
+        bgBottom: '#150711',
         accentColor: '#f472b6',
-        motif: '✨',
+        motif: '🎭',
+        // 활기찬 축제 분위기의 경쾌한 테트리스 리듬
         melody: [
-          ['C5', 1], ['E5', 1], ['G5', 1], ['E5', 1],
-          ['F5', 1], ['E5', 1], ['D5', 2],
-          ['B4', 1], ['D5', 1], ['F5', 1], ['D5', 1],
-          ['E5', 2], ['C5', 2],
+          ['E5', 0.5], ['G5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 1], ['D5', 0.5], ['E5', 0.5],
+          ['F5', 0.5], ['A5', 0.5], ['G5', 0.5], ['F5', 0.5], ['E5', 1.5], ['REST', 0.5],
+          ['D5', 0.5], ['F5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['D5', 0.5], ['B4', 1],
+          ['C5', 1], ['A4', 1], ['A4', 2],
         ],
       },
       {
         id: 'mar',
-        shortName: '3월',
-        bannerTitle: '🌸 3월 · 봄바람 왈츠',
+        shortName: '3월 · 종달새의 노래',
+        bannerTitle: '🐦 3월 · 종달새의 노래',
         targetLines: 30,
         dropInterval: 620,
-        tempo: 128,
-        wave: 'triangle',
+        tempo: 142,
+        wave: 'sine',
         bgTop: '#163327',
-        bgBottom: '#091711',
-        accentColor: '#f9a8d4',
-        motif: '🌸',
+        bgBottom: '#081711',
+        accentColor: '#4ade80',
+        motif: '🐦',
+        // 봄을 알리는 종달새의 가볍고 톡톡 튀는 선율
         melody: [
-          ['G4', 1], ['C5', 1], ['E5', 1],
-          ['D5', 1], ['B4', 1], ['G4', 1],
-          ['A4', 1], ['C5', 1], ['F5', 1],
-          ['E5', 2], ['C5', 1],
+          ['G5', 0.5], ['E5', 0.5], ['F5', 0.5], ['G5', 0.5], ['A5', 1], ['G5', 0.5], ['E5', 0.5],
+          ['D5', 0.5], ['E5', 0.5], ['F5', 0.5], ['D5', 0.5], ['E5', 1.5], ['REST', 0.5],
+          ['C5', 0.5], ['E5', 0.5], ['G5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['B4', 1],
+          ['C5', 1], ['A4', 1], ['A4', 2],
         ],
       },
       {
         id: 'apr',
-        shortName: '4월',
-        bannerTitle: '🌼 4월 · 벚꽃 멜로디',
+        shortName: '4월 · 스노드롭',
+        bannerTitle: '🌼 4월 · 스노드롭',
         targetLines: 40,
         dropInterval: 575,
-        tempo: 132,
+        tempo: 126,
         wave: 'sine',
-        bgTop: '#2a2414',
-        bgBottom: '#131008',
-        accentColor: '#fde047',
+        bgTop: '#192e29',
+        bgBottom: '#0b1613',
+        accentColor: '#a7f3d0',
         motif: '🌼',
+        // 이른 봄 꽃망울의 순수하고 맑은 테트리스 패턴
         melody: [
-          ['E5', 1], ['E5', 0.5], ['F5', 0.5], ['G5', 1], ['E5', 1],
-          ['D5', 1], ['C5', 1], ['D5', 2],
-          ['C5', 1], ['D5', 0.5], ['E5', 0.5], ['G5', 1], ['E5', 1],
-          ['D5', 2], ['REST', 2],
+          ['C5', 1], ['E5', 0.5], ['D5', 0.5], ['C5', 1], ['B4', 0.5], ['A4', 0.5],
+          ['C5', 1], ['E5', 0.5], ['G5', 0.5], ['E5', 1.5], ['REST', 0.5],
+          ['D5', 1], ['F5', 0.5], ['E5', 0.5], ['D5', 1], ['C5', 0.5], ['B4', 0.5],
+          ['A4', 1], ['C5', 1], ['A4', 2],
         ],
       },
       {
         id: 'may',
-        shortName: '5월',
-        bannerTitle: '🌿 5월 · 싱그러운 신록',
+        shortName: '5월 · 백야',
+        bannerTitle: '🌌 5월 · 백야',
         targetLines: 50,
         dropInterval: 530,
-        tempo: 136,
-        wave: 'triangle',
-        bgTop: '#113626',
-        bgBottom: '#071811',
-        accentColor: '#4ade80',
-        motif: '🌿',
+        tempo: 132,
+        wave: 'sine',
+        bgTop: '#162847',
+        bgBottom: '#091224',
+        accentColor: '#93c5fd',
+        motif: '🌌',
+        // 밝은 초여름 밤의 투명하고 길게 뻗는 테트리스 선율
         melody: [
-          ['C5', 0.5], ['D5', 0.5], ['E5', 1], ['G5', 1], ['E5', 1],
-          ['A5', 1], ['G5', 1], ['E5', 2],
-          ['F5', 1], ['A5', 1], ['G5', 1], ['E5', 1],
-          ['D5', 2], ['C5', 2],
+          ['E5', 1], ['G5', 0.5], ['A5', 0.5], ['G5', 1], ['E5', 0.5], ['D5', 0.5],
+          ['C5', 1], ['D5', 0.5], ['E5', 0.5], ['G5', 1.5], ['REST', 0.5],
+          ['A5', 1], ['G5', 0.5], ['E5', 0.5], ['D5', 1], ['C5', 0.5], ['D5', 0.5],
+          ['E5', 1], ['C5', 1], ['A4', 2],
         ],
       },
       {
         id: 'jun',
-        shortName: '6월',
-        bannerTitle: '☀️ 6월 · 초여름 햇살',
+        shortName: '6월 · 뱃노래',
+        bannerTitle: '⛵ 6월 · 뱃노래',
         targetLines: 60,
         dropInterval: 490,
-        tempo: 140,
+        tempo: 124,
         wave: 'triangle',
-        bgTop: '#142c44',
-        bgBottom: '#081422',
-        accentColor: '#fbbf24',
-        motif: '☀️',
+        bgTop: '#112c3d',
+        bgBottom: '#07141d',
+        accentColor: '#38bdf8',
+        motif: '⛵',
+        // 잔잔하고 유려하게 출렁이는 테트리스 변주
         melody: [
-          ['G4', 0.5], ['C5', 0.5], ['E5', 0.5], ['G5', 0.5], ['A5', 1], ['G5', 1],
-          ['E5', 1], ['C5', 1], ['D5', 2],
-          ['F5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['D5', 1], ['E5', 1],
-          ['C5', 2], ['REST', 2],
+          ['A4', 1], ['E5', 0.5], ['D5', 0.5], ['C5', 1], ['B4', 0.5], ['C5', 0.5],
+          ['D5', 1], ['C5', 0.5], ['B4', 0.5], ['A4', 1.5], ['REST', 0.5],
+          ['E5', 1], ['D5', 0.5], ['C5', 0.5], ['B4', 1], ['G4', 0.5], ['B4', 0.5],
+          ['C5', 1], ['A4', 1], ['A4', 2],
         ],
       },
       {
         id: 'jul',
-        shortName: '7월',
-        bannerTitle: '🌊 7월 · 한여름 파도',
+        shortName: '7월 · 낫질하는 사람의 노래',
+        bannerTitle: '🌾 7월 · 낫질하는 사람의 노래',
         targetLines: 70,
         dropInterval: 450,
         tempo: 144,
-        wave: 'sine',
-        bgTop: '#0b2d47',
-        bgBottom: '#051524',
-        accentColor: '#38bdf8',
-        motif: '🌊',
+        wave: 'triangle',
+        bgTop: '#332912',
+        bgBottom: '#161107',
+        accentColor: '#facc15',
+        motif: '🌾',
+        // 한여름 수확 노동의 규칙적이고 힘찬 엇박 리듬
         melody: [
-          ['E5', 0.5], ['G5', 0.5], ['C6', 1], ['B5', 0.5], ['A5', 0.5], ['G5', 1],
-          ['E5', 1], ['F5', 1], ['G5', 2],
-          ['A5', 0.5], ['G5', 0.5], ['E5', 1], ['D5', 0.5], ['E5', 0.5], ['C5', 1],
-          ['D5', 2], ['C5', 2],
+          ['E5', 0.75], ['E5', 0.25], ['D5', 0.5], ['C5', 0.5], ['D5', 0.75], ['C5', 0.25], ['B4', 0.5], ['A4', 0.5],
+          ['C5', 0.75], ['C5', 0.25], ['E5', 0.5], ['G5', 0.5], ['E5', 1.5], ['REST', 0.5],
+          ['D5', 0.75], ['D5', 0.25], ['F5', 0.5], ['A5', 0.5], ['G5', 0.5], ['F5', 0.5], ['E5', 1],
+          ['C5', 1], ['A4', 1], ['A4', 2],
         ],
       },
       {
         id: 'aug',
-        shortName: '8월',
-        bannerTitle: '🎆 8월 · 한여름 밤 불꽃',
+        shortName: '8월 · 수확',
+        bannerTitle: '🌻 8월 · 수확',
         targetLines: 80,
         dropInterval: 410,
-        tempo: 148,
+        tempo: 150,
         wave: 'triangle',
-        bgTop: '#2c173d',
-        bgBottom: '#12081c',
-        accentColor: '#fb7185',
-        motif: '🎆',
+        bgTop: '#362310',
+        bgBottom: '#170e06',
+        accentColor: '#fbbf24',
+        motif: '🌻',
+        // 풍요로운 늦여름의 꽉 찬 활기
         melody: [
-          ['C5', 0.5], ['E5', 0.5], ['G5', 0.5], ['C6', 0.5], ['B5', 1], ['G5', 1],
-          ['A5', 0.5], ['G5', 0.5], ['F5', 0.5], ['D5', 0.5], ['E5', 2],
-          ['G5', 0.5], ['A5', 0.5], ['C6', 1], ['A5', 0.5], ['G5', 0.5], ['E5', 1],
-          ['G5', 2], ['C5', 2],
+          ['A4', 0.5], ['C5', 0.5], ['E5', 0.5], ['A5', 0.5], ['G5', 0.5], ['F5', 0.5], ['E5', 1],
+          ['D5', 0.5], ['F5', 0.5], ['A5', 0.5], ['G5', 0.5], ['E5', 1.5], ['REST', 0.5],
+          ['C5', 0.5], ['D5', 0.5], ['E5', 0.5], ['G5', 0.5], ['F5', 0.5], ['E5', 0.5], ['D5', 1],
+          ['C5', 1], ['A4', 1], ['A4', 2],
         ],
       },
       {
         id: 'sep',
-        shortName: '9월',
-        bannerTitle: '🍂 9월 · 선선한 가을바람',
+        shortName: '9월 · 사냥',
+        bannerTitle: '🏹 9월 · 사냥',
         targetLines: 90,
         dropInterval: 375,
-        tempo: 138,
-        wave: 'sine',
-        bgTop: '#382112',
-        bgBottom: '#180d07',
-        accentColor: '#fb923c',
-        motif: '🍂',
+        tempo: 156,
+        wave: 'triangle',
+        bgTop: '#331714',
+        bgBottom: '#150807',
+        accentColor: '#f87171',
+        motif: '🏹',
+        // 가을의 역동성과 질주감을 살린 빠른 테트리스 템포
         melody: [
-          ['A4', 1], ['C5', 1], ['E5', 1], ['D5', 1],
-          ['C5', 1], ['B4', 1], ['A4', 2],
-          ['E5', 1], ['D5', 0.5], ['C5', 0.5], ['B4', 1], ['G4', 1],
-          ['A4', 2], ['REST', 2],
+          ['E5', 0.5], ['E5', 0.5], ['B4', 0.5], ['C5', 0.5], ['D5', 0.5], ['E5', 0.5], ['G5', 1],
+          ['A5', 0.5], ['G5', 0.5], ['F5', 0.5], ['E5', 0.5], ['D5', 1.5], ['REST', 0.5],
+          ['B4', 0.5], ['C5', 0.5], ['D5', 0.5], ['F5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 1],
+          ['B4', 1], ['A4', 1], ['A4', 2],
         ],
       },
       {
         id: 'oct',
-        shortName: '10월',
-        bannerTitle: '🎃 10월 · 단풍과 미스터리',
+        shortName: '10월 · 가을의 노래',
+        bannerTitle: '🍂 10월 · 가을의 노래',
         targetLines: 100,
         dropInterval: 340,
-        tempo: 146,
-        wave: 'triangle',
-        bgTop: '#331926',
-        bgBottom: '#160910',
-        accentColor: '#f97316',
-        motif: '🎃',
+        tempo: 120,
+        wave: 'sine',
+        bgTop: '#331d12',
+        bgBottom: '#160c07',
+        accentColor: '#fb923c',
+        motif: '🍂',
+        // 쓸쓸하고 서정적인 가을 감성의 테트리스 테마
         melody: [
-          ['A4', 0.5], ['C5', 0.5], ['E5', 0.5], ['A4', 0.5], ['G4', 1], ['A4', 1],
-          ['C5', 0.5], ['D5', 0.5], ['E5', 1], ['D5', 1], ['B4', 1],
-          ['A4', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['B4', 1], ['G4', 1],
-          ['A4', 2], ['REST', 2],
+          ['A4', 1], ['C5', 0.5], ['B4', 0.5], ['A4', 1], ['E4', 0.5], ['G4', 0.5],
+          ['A4', 1], ['C5', 0.5], ['E5', 0.5], ['D5', 1.5], ['REST', 0.5],
+          ['C5', 1], ['B4', 0.5], ['A4', 0.5], ['G4', 1], ['E4', 0.5], ['G4', 0.5],
+          ['A4', 1], ['E4', 1], ['A4', 2],
         ],
       },
       {
         id: 'nov',
-        shortName: '11월',
-        bannerTitle: '🍁 11월 · 늦가을 노을',
+        shortName: '11월 · 트로이카',
+        bannerTitle: '🛷 11월 · 트로이카',
         targetLines: 110,
         dropInterval: 305,
-        tempo: 135,
-        wave: 'sine',
-        bgTop: '#2a1c36',
-        bgBottom: '#120b18',
+        tempo: 158,
+        wave: 'triangle',
+        bgTop: '#1d243b',
+        bgBottom: '#0b0e19',
         accentColor: '#c084fc',
-        motif: '🍁',
+        motif: '🛷',
+        // 세 마리 말이 끄는 썰매의 힘찬 질주감
         melody: [
-          ['G4', 1], ['A4', 0.5], ['B4', 0.5], ['D5', 1], ['C5', 1],
-          ['B4', 1], ['G4', 1], ['A4', 2],
-          ['D5', 1], ['E5', 0.5], ['D5', 0.5], ['B4', 1], ['G4', 1],
-          ['A4', 2], ['G4', 2],
+          ['E5', 0.5], ['C5', 0.5], ['A4', 0.5], ['C5', 0.5], ['E5', 0.5], ['G5', 0.5], ['A5', 1],
+          ['G5', 0.5], ['E5', 0.5], ['D5', 0.5], ['B4', 0.5], ['C5', 1.5], ['REST', 0.5],
+          ['D5', 0.5], ['F5', 0.5], ['A5', 0.5], ['G5', 0.5], ['F5', 0.5], ['E5', 0.5], ['D5', 1],
+          ['E5', 1], ['C5', 1], ['A4', 2],
         ],
       },
       {
         id: 'dec',
-        shortName: '12월',
-        bannerTitle: '🎄 12월 · 크리스마스 벨 캐럴',
+        shortName: '12월 · 크리스마스',
+        bannerTitle: '🎄 12월 · 크리스마스',
         targetLines: 120,
         dropInterval: 270,
         tempo: 132,
         wave: 'sine',
-        bgTop: '#133127',
-        bgBottom: '#081712',
-        accentColor: '#f87171',
+        bgTop: '#143327',
+        bgBottom: '#081711',
+        accentColor: '#4ade80',
         motif: '🎄',
         isChristmas: true,
+        // 연말과 왈츠의 따뜻한 마무리를 담은 테트리스 풍 멜로디
         melody: [
           ['E5', 1], ['B4', 0.5], ['C5', 0.5], ['D5', 1], ['C5', 0.5], ['B4', 0.5],
           ['A4', 1], ['A4', 0.5], ['C5', 0.5], ['E5', 1], ['D5', 0.5], ['C5', 0.5],
@@ -912,9 +928,8 @@
         accentColor: '#facc15',
         motif: '🐘',
         melody: [
-          ['C5', 0.5], ['G5', 0.5], ['C6', 1], ['G5', 0.5], ['E5', 0.5], ['C5', 1],
-          ['F5', 0.5], ['A5', 0.5], ['G5', 1], ['E5', 1], ['D5', 1],
-          ['C5', 1], ['E5', 1], ['G5', 1], ['C6', 1],
+          ['E5', 1], ['B4', 0.5], ['C5', 0.5], ['D5', 1], ['C5', 0.5], ['B4', 0.5],
+          ['A4', 1], ['C5', 0.5], ['E5', 0.5], ['D5', 1.5], ['REST', 0.5],
         ],
       },
       {
@@ -933,8 +948,8 @@
         accentColor: '#38bdf8',
         motif: '🐜',
         melody: [
-          ['E5', 0.5], ['G5', 0.5], ['A5', 0.5], ['C6', 0.5], ['B5', 0.5], ['A5', 0.5], ['G5', 1],
-          ['F5', 0.5], ['A5', 0.5], ['G5', 0.5], ['E5', 0.5], ['D5', 0.5], ['E5', 0.5], ['C5', 1],
+          ['E5', 0.5], ['B4', 0.5], ['C5', 0.5], ['D5', 0.5], ['E5', 0.5], ['G5', 0.5], ['A5', 1],
+          ['G5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['A4', 1.5], ['REST', 0.5],
         ],
       },
     ];
@@ -978,7 +993,7 @@
     const audioHintEl = document.getElementById('audioHint');
 
     // =========================================================================
-    // 월별 음악 + 효과음 엔진 (즉시 음소거 보장)
+    // 테트리스 풍 월별 멜로디 + 효과음 엔진 (즉시 음소거 보장)
     // =========================================================================
     const soundEngine = {
       enabled: true,
@@ -991,7 +1006,7 @@
       activeStage: STAGES[0],
 
       get beatSec() {
-        return 60 / (this.activeStage?.tempo || 130);
+        return 60 / (this.activeStage?.tempo || 132);
       },
 
       setStage(stage) {
@@ -1036,12 +1051,12 @@
 
         if (!this.enabled) return null;
         if (audioCtx.state === 'running' && audioHintEl) {
-          audioHintEl.textContent = `🎵 ${this.activeStage.shortName} 테마 음악 재생 중`;
+          audioHintEl.textContent = `🎵 ${this.activeStage.shortName} (테트리스 풍) 재생 중`;
         }
         return audioCtx;
       },
 
-      playStageNote(freq, durationSec, startTime, volume = 0.18) {
+      playStageNote(freq, durationSec, startTime, volume = 0.19) {
         if (!this.enabled || !freq || !this.ctx || !this.masterGain || this.ctx.state !== 'running') return;
         if (this.masterGain.gain.value <= 0.0001) return;
 
@@ -1050,18 +1065,18 @@
         const gain = this.ctx.createGain();
         const osc2Gain = this.ctx.createGain();
 
-        osc1.type = this.activeStage?.wave || 'sine';
+        osc1.type = this.activeStage?.wave || 'triangle';
         osc1.frequency.setValueAtTime(freq, startTime);
 
         osc2.type = 'triangle';
         osc2.frequency.setValueAtTime(freq * 2, startTime);
 
-        const harmonicWeight = this.activeStage?.isChristmas ? 0.22 : 0.12;
+        const harmonicWeight = this.activeStage?.isChristmas ? 0.22 : 0.14;
         osc2Gain.gain.setValueAtTime(harmonicWeight, startTime);
         osc2Gain.gain.exponentialRampToValueAtTime(0.001, startTime + Math.min(durationSec * 0.6, 0.24));
 
         gain.gain.setValueAtTime(0.001, startTime);
-        gain.gain.linearRampToValueAtTime(volume, startTime + 0.018);
+        gain.gain.linearRampToValueAtTime(volume, startTime + 0.016);
         gain.gain.exponentialRampToValueAtTime(0.0008, startTime + durationSec * 1.12);
 
         osc1.connect(gain);
@@ -1085,7 +1100,7 @@
         while (this.nextNoteTime < this.ctx.currentTime + 0.15) {
           const [noteName, beats] = melody[this.step % melody.length];
           const dur = beats * this.beatSec;
-          this.playStageNote(NOTE[noteName], dur, this.nextNoteTime, 0.18);
+          this.playStageNote(NOTE[noteName], dur, this.nextNoteTime, 0.19);
           this.nextNoteTime += dur;
           this.step++;
         }
@@ -1134,8 +1149,8 @@
 
         const audioCtx = await this.unlock();
         if (audioCtx && this.enabled && audioCtx.state === 'running') {
-          this.playStageNote(NOTE.E5, 0.16, audioCtx.currentTime + 0.01, 0.16);
-          this.playStageNote(NOTE.G5, 0.2, audioCtx.currentTime + 0.1, 0.16);
+          this.playStageNote(NOTE.E5, 0.15, audioCtx.currentTime + 0.01, 0.16);
+          this.playStageNote(NOTE.A5, 0.2, audioCtx.currentTime + 0.1, 0.16);
         }
         syncBgmWithGameState();
       },
@@ -1168,7 +1183,7 @@
 
       sfxClear(lines) {
         this.playSfx((audioCtx) => {
-          const chord = [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].slice(0, Math.min(lines, 4));
+          const chord = [NOTE.A4, NOTE.C5, NOTE.E5, NOTE.A5].slice(0, Math.min(lines, 4));
           chord.forEach((freq, idx) => {
             this.playStageNote(freq, 0.22, audioCtx.currentTime + idx * 0.065, 0.16);
           });
@@ -1177,7 +1192,7 @@
 
       sfxStageUp() {
         this.playSfx((audioCtx) => {
-          const fanfare = [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6];
+          const fanfare = [NOTE.A4, NOTE.C5, NOTE.E5, NOTE.A5];
           fanfare.forEach((freq, idx) => {
             this.playStageNote(freq, 0.2, audioCtx.currentTime + idx * 0.08, 0.18);
           });
@@ -1187,8 +1202,8 @@
       sfxGrandFinale() {
         this.playSfx((audioCtx) => {
           const finale = [
-            [NOTE.C5, 0.14], [NOTE.E5, 0.14], [NOTE.G5, 0.14], [NOTE.C6, 0.36],
-            [NOTE.G5, 0.14], [NOTE.A5, 0.14], [NOTE.B5, 0.14], [NOTE.C6, 0.48],
+            [NOTE.A4, 0.14], [NOTE.C5, 0.14], [NOTE.E5, 0.14], [NOTE.A5, 0.36],
+            [NOTE.G5, 0.14], [NOTE.E5, 0.14], [NOTE.D5, 0.14], [NOTE.A5, 0.48],
           ];
           let offset = 0;
           finale.forEach(([freq, dur]) => {
@@ -1727,7 +1742,6 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
-      // 월별 테마 이모지 파티클
       ctx.save();
       ctx.globalAlpha = 0.16;
       for (const p of state.particles) {
@@ -1736,7 +1750,6 @@
       }
       ctx.restore();
 
-      // 격자선
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.lineWidth = 1;
       for (let c = 1; c < state.cols; c++) {
@@ -1752,7 +1765,6 @@
         ctx.stroke();
       }
 
-      // 고정된 블록
       for (let r = 0; r < state.rows; r++) {
         for (let c = 0; c < state.cols; c++) {
           const cell = state.grid[r][c];
@@ -1764,7 +1776,6 @@
 
       if (!state.current) return;
 
-      // 고스트 피스
       const ghostY = getGhostY();
       const shape = getMatrix(state.current.type, state.current.rot);
       const color = COLORS[state.current.type];
@@ -1785,7 +1796,6 @@
         }
       }
 
-      // 현재 떨어지는 블록
       for (let r = 0; r < shape.length; r++) {
         for (let c = 0; c < shape[r].length; c++) {
           if (!shape[r][c]) continue;
@@ -1847,7 +1857,6 @@
       celebCtx.fillStyle = bg;
       celebCtx.fillRect(0, 0, w, h);
 
-      // 빛나는 별 & 링
       const pulse = 1 + Math.sin(elapsed * 5) * 0.08;
       celebCtx.save();
       celebCtx.translate(w / 2, h * 0.43);
@@ -1865,8 +1874,7 @@
       celebCtx.fillText('🏆', 0, 2);
       celebCtx.restore();
 
-      // 춤추는 월간 이모지들
-      const badges = ['❄️', '🌸', '☀️', '🍂', '🎄', '🐘', '🐜'];
+      const badges = ['🔥', '🐦', '⛵', '🌾', '🍂', '🛷', '🎄'];
       badges.forEach((em, idx) => {
         const angle = elapsed * 1.4 + (idx * Math.PI * 2) / badges.length;
         const bx = w / 2 + Math.cos(angle) * 145;
@@ -1877,7 +1885,6 @@
         celebCtx.fillText(em, bx, by);
       });
 
-      // 컨페티
       for (const c of confetti) {
         c.y += c.vy * 0.016;
         c.x += Math.sin(elapsed * 3 + c.rot) * 0.8 + c.vx * 0.016;
@@ -1893,7 +1900,6 @@
         celebCtx.restore();
       }
 
-      // 축하 자막
       celebCtx.fillStyle = '#ffffff';
       celebCtx.font = 'bold 20px sans-serif';
       celebCtx.textAlign = 'center';
