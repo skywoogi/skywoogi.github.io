@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML5 테트리스 & AI 에이전트</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #2f81f7;
+      --accent-hover: #58a6ff;
+      --success: #238636;
+      --danger: #da3633;
+      --grid: rgba(255, 255, 255, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #161f2e 0%, var(--bg) 65%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .board-container {
+      position: relative;
+      background: #090c10;
+      border: 2px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    canvas#board {
+      display: block;
+      background: var(--grid);
+      border-radius: 6px;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 10px;
+      background: rgba(9, 12, 16, 0.86);
+      backdrop-filter: blur(4px);
+      border-radius: 6px;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .overlay.visible {
+      display: flex;
+    }
+
+    .overlay h2 {
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+    }
+
+    .overlay p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .sidebar {
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .radio-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .radio-option {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #0d1117;
+      border: 1px solid var(--panel-border);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+      user-select: none;
+    }
+
+    .radio-option input[type="radio"] {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .radio-option:has(input[type="radio"]:checked) {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(47, 129, 247, 0.12);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .stat-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .stat-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mini-box {
+      background: #0d1117;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .mini-box span {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    canvas.mini-canvas {
+      display: block;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: var(--accent);
+      transition: background 0.15s ease, transform 0.05s ease;
+      margin-bottom: 8px;
+    }
+
+    button:last-child {
+      margin-bottom: 0;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    button:active {
+      transform: scale(0.99);
+    }
+
+    button.ai-active {
+      background: var(--success);
+    }
+
+    button.ai-active:hover {
+      background: #2ea043;
+    }
+
+    button.secondary {
+      background: #21262d;
+      border: 1px solid var(--panel-border);
+    }
+
+    button.secondary:hover {
+      background: #30363d;
+    }
+
+    .slider-wrap {
+      margin-top: 8px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .ai-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(47, 129, 247, 0.15);
+      color: var(--accent-hover);
+    }
+
+    .ai-badge.on {
+      background: rgba(35, 134, 54, 0.25);
+      color: #4ac26b;
+    }
+
+    .controls-list {
+      list-style: none;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .controls-list kbd {
+      background: #0d1117;
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--text);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="board-container">
+      <canvas id="board" width="300" height="600"></canvas>
+      <div id="overlay" class="overlay">
+        <h2 id="overlayTitle">일시정지</h2>
+        <p id="overlayDesc">계속하려면 재개 버튼을 누르거나 P를 입력하세요.</p>
+        <button id="overlayBtn" type="button">계속하기</button>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="card">
+        <div class="card-title">
+          <span>사운드</span>
+          <span id="soundStatusLabel">ON</span>
+        </div>
+        <div class="radio-group" role="radiogroup" aria-label="사운드 설정">
+          <label class="radio-option">
+            <input type="radio" name="soundToggle" id="soundOnRadio" value="on" checked />
+            <span>켬</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="soundToggle" id="soundOffRadio" value="off" />
+            <span>끔</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>AI 에이전트</span>
+          <span id="aiBadge" class="ai-badge">OFF</span>
+        </div>
+        <button id="toggleAiBtn" type="button">AI 에이전트 켜기 (A)</button>
+        <div class="slider-wrap">
+          <div class="slider-label">
+            <span>AI 이동 딜레이</span>
+            <span id="aiSpeedVal">45ms</span>
+          </div>
+          <input id="aiSpeedSlider" type="range" min="10" max="250" step="5" value="45" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>기록</span></div>
+        <div class="stat-row">
+          <span class="stat-label">점수</span>
+          <span id="score" class="stat-value">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">라인</span>
+          <span id="lines" class="stat-value">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">레벨</span>
+          <span id="level" class="stat-value">1</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>블록 미리보기</span></div>
+        <div class="mini-grid">
+          <div class="mini-box">
+            <span>HOLD (C)</span>
+            <canvas id="holdCanvas" class="mini-canvas" width="76" height="56"></canvas>
+          </div>
+          <div class="mini-box">
+            <span>NEXT</span>
+            <canvas id="nextCanvas" class="mini-canvas" width="76" height="56"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>제어</span></div>
+        <button id="pauseBtn" class="secondary" type="button">일시정지 (P)</button>
+        <button id="restartBtn" class="secondary" type="button">새 게임 (R)</button>
+        <ul class="controls-list" style="margin-top: 10px;">
+          <li><kbd>←</kbd> <kbd>→</kbd> 좌우 이동</li>
+          <li><kbd>↑</kbd> <kbd>X</kbd> 회전</li>
+          <li><kbd>↓</kbd> 소프트 드롭</li>
+          <li><kbd>Space</kbd> 하드 드롭</li>
+          <li><kbd>C</kbd> / <kbd>Shift</kbd> 홀드</li>
+          <li><kbd>A</kbd> AI 전환 · <kbd>P</kbd> 정지</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK = 30;
+
+    const COLORS = {
+      I: '#38bdf8',
+      O: '#facc15',
+      T: '#c084fc',
+      S: '#4ade80',
+      Z: '#f87171',
+      J: '#60a5fa',
+      L: '#fb923c',
+    };
+
+    const SHAPES = {
+      I: [
+        [
+          [0, 0, 0, 0],
+          [1, 1, 1, 1],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [1, 1, 1, 1],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+        ],
+      ],
+      O: [
+        [
+          [1, 1],
+          [1, 1],
+        ],
+        [
+          [1, 1],
+          [1, 1],
+        ],
+        [
+          [1, 1],
+          [1, 1],
+        ],
+        [
+          [1, 1],
+          [1, 1],
+        ],
+      ],
+      T: [
+        [
+          [0, 1, 0],
+          [1, 1, 1],
+          [0, 0, 0],
+        ],
+        [
+          [0, 1, 0],
+          [0, 1, 1],
+          [0, 1, 0],
+        ],
+        [
+          [0, 0, 0],
+          [1, 1, 1],
+          [0, 1, 0],
+        ],
+        [
+          [0, 1, 0],
+          [1, 1, 0],
+          [0, 1, 0],
+        ],
+      ],
+      S: [
+        [
+          [0, 1, 1],
+          [1, 1, 0],
+          [0, 0, 0],
+        ],
+        [
+          [0, 1, 0],
+          [0, 1, 1],
+          [0, 0, 1],
+        ],
+        [
+          [0, 0, 0],
+          [0, 1, 1],
+          [1, 1, 0],
+        ],
+        [
+          [1, 0, 0],
+          [1, 1, 0],
+          [0, 1, 0],
+        ],
+      ],
+      Z: [
+        [
+          [1, 1, 0],
+          [0, 1, 1],
+          [0, 0, 0],
+        ],
+        [
+          [0, 0, 1],
+          [0, 1, 1],
+          [0, 1, 0],
+        ],
+        [
+          [0, 0, 0],
+          [1, 1, 0],
+          [0, 1, 1],
+        ],
+        [
+          [0, 1, 0],
+          [1, 1, 0],
+          [1, 0, 0],
+        ],
+      ],
+      J: [
+        [
+          [1, 0, 0],
+          [1, 1, 1],
+          [0, 0, 0],
+        ],
+        [
+          [0, 1, 1],
+          [0, 1, 0],
+          [0, 1, 0],
+        ],
+        [
+          [0, 0, 0],
+          [1, 1, 1],
+          [0, 0, 1],
+        ],
+        [
+          [0, 1, 0],
+          [0, 1, 0],
+          [1, 1, 0],
+        ],
+      ],
+      L: [
+        [
+          [0, 0, 1],
+          [1, 1, 1],
+          [0, 0, 0],
+        ],
+        [
+          [0, 1, 0],
+          [0, 1, 0],
+          [0, 1, 1],
+        ],
+        [
+          [0, 0, 0],
+          [1, 1, 1],
+          [1, 0, 0],
+        ],
+        [
+          [1, 1, 0],
+          [0, 1, 0],
+          [0, 1, 0],
+        ],
+      ],
+    };
+
+    const LINE_SCORES = [0, 100, 300, 500, 800];
+
+    const boardCanvas = document.getElementById('board');
+    const ctx = boardCanvas.getContext('2d');
+    const holdCanvas = document.getElementById('holdCanvas');
+    const holdCtx = holdCanvas.getContext('2d');
+    const nextCanvas = document.getElementById('nextCanvas');
+    const nextCtx = nextCanvas.getContext('2d');
+
+    const scoreEl = document.getElementById('score');
+    const linesEl = document.getElementById('lines');
+    const levelEl = document.getElementById('level');
+    const overlayEl = document.getElementById('overlay');
+    const overlayTitleEl = document.getElementById('overlayTitle');
+    const overlayDescEl = document.getElementById('overlayDesc');
+    const overlayBtnEl = document.getElementById('overlayBtn');
+    const toggleAiBtn = document.getElementById('toggleAiBtn');
+    const aiBadge = document.getElementById('aiBadge');
+    const aiSpeedSlider = document.getElementById('aiSpeedSlider');
+    const aiSpeedVal = document.getElementById('aiSpeedVal');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const soundOnRadio = document.getElementById('soundOnRadio');
+    const soundOffRadio = document.getElementById('soundOffRadio');
+    const soundStatusLabel = document.getElementById('soundStatusLabel');
+
+    // =========================================================================
+    // 크리스마스 스타일 BGM + 효과음 엔진 (Web Audio API)
+    // =========================================================================
+    const NOTE_FREQ = {
+      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+      C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00,
+      C3: 130.81, F3: 174.61, G3: 196.00, A3: 220.00,
+    };
+
+    // 경쾌한 8비트 캐럴 풍 멜로디 (음표 이름, 8분음표 기준 길이)
+    const XMAS_MELODY = [
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['G5', 1], ['C5', 1.5], ['D5', 0.5],
+      ['E5', 4],
+      ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5],
+      ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
+      ['E5', 1], ['D5', 1], ['D5', 1], ['E5', 1],
+      ['D5', 2], ['G5', 2],
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['G5', 1], ['C5', 1.5], ['D5', 0.5],
+      ['E5', 4],
+      ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5],
+      ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
+      ['G5', 1], ['G5', 1], ['F5', 1], ['D5', 1],
+      ['C5', 4],
+    ];
+
+    const XMAS_BASS = [
+      ['C3', 2], ['G3', 2],
+      ['C3', 2], ['G3', 2],
+      ['C3', 2], ['E4', 2],
+      ['C3', 2], ['G3', 2],
+      ['F3', 2], ['C4', 2],
+      ['C3', 2], ['G3', 2],
+      ['G3', 2], ['D4', 2],
+      ['G3', 2], ['G4', 2],
+      ['C3', 2], ['G3', 2],
+      ['C3', 2], ['G3', 2],
+      ['C3', 2], ['E4', 2],
+      ['C3', 2], ['G3', 2],
+      ['F3', 2], ['C4', 2],
+      ['C3', 2], ['G3', 2],
+      ['G3', 2], ['G3', 2],
+      ['C3', 4],
+    ];
+
+    const soundEngine = {
+      enabled: true,
+      ctx: null,
+      bgmTimer: null,
+      melodyIdx: 0,
+      bassIdx: 0,
+      nextMelodyTime: 0,
+      nextBassTime: 0,
+      eighthDuration: 60 / 152 / 2, // 152 BPM 기준 8분음표 길이
+
+      ensureContext() {
+        if (!this.enabled) return null;
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return null;
+          this.ctx = new AudioCtx();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+        return this.ctx;
+      },
+
+      playTone(freq, duration, type = 'triangle', gainPeak = 0.08, delay = 0, slideTo = null) {
+        const audioCtx = this.ensureContext();
+        if (!audioCtx || !freq) return;
+
+        const now = audioCtx.currentTime + delay;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) {
+          osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        }
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(gainPeak, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      },
+
+      // 크리스마스 종소리(벨) 뉘앙스 추가
+      playBell(freq, duration, gainPeak = 0.055, time = null) {
+        const audioCtx = this.ensureContext();
+        if (!audioCtx || !freq) return;
+
+        const startAt = time !== null ? time : audioCtx.currentTime;
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        osc1.frequency.setValueAtTime(freq, startAt);
+        osc2.frequency.setValueAtTime(freq * 2, startAt);
+
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.linearRampToValueAtTime(gainPeak, startAt + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+        const subGain = audioCtx.createGain();
+        subGain.gain.setValueAtTime(0.25, startAt);
+
+        osc1.connect(gain);
+        osc2.connect(subGain);
+        subGain.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start(startAt);
+        osc2.start(startAt);
+        osc1.stop(startAt + duration + 0.02);
+        osc2.stop(startAt + duration + 0.02);
+      },
+
+      scheduleBgm() {
+        if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
+
+        const lookahead = 0.16;
+        while (this.nextMelodyTime < this.ctx.currentTime + lookahead) {
+          const [note, beats] = XMAS_MELODY[this.melodyIdx % XMAS_MELODY.length];
+          const dur = beats * this.eighthDuration;
+          this.playBell(NOTE_FREQ[note], dur * 0.92, 0.052, this.nextMelodyTime);
+          this.nextMelodyTime += dur;
+          this.melodyIdx++;
+        }
+
+        while (this.nextBassTime < this.ctx.currentTime + lookahead) {
+          const [note, beats] = XMAS_BASS[this.bassIdx % XMAS_BASS.length];
+          const dur = beats * this.eighthDuration;
+          const freq = NOTE_FREQ[note];
+          if (freq) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, this.nextBassTime);
+            gain.gain.setValueAtTime(0.0001, this.nextBassTime);
+            gain.gain.linearRampToValueAtTime(0.06, this.nextBassTime + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.nextBassTime + dur * 0.9);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(this.nextBassTime);
+            osc.stop(this.nextBassTime + dur + 0.02);
+          }
+          this.nextBassTime += dur;
+          this.bassIdx++;
+        }
+      },
+
+      startBgm() {
+        if (!this.enabled) return;
+        const audioCtx = this.ensureContext();
+        if (!audioCtx) return;
+
+        if (!this.bgmTimer) {
+          const now = audioCtx.currentTime + 0.05;
+          this.nextMelodyTime = now;
+          this.nextBassTime = now;
+          this.bgmTimer = setInterval(() => this.scheduleBgm(), 50);
+        }
+        this.scheduleBgm();
+      },
+
+      stopBgm() {
+        if (this.bgmTimer) {
+          clearInterval(this.bgmTimer);
+          this.bgmTimer = null;
+        }
+      },
+
+      setEnabled(value) {
+        this.enabled = Boolean(value);
+        soundStatusLabel.textContent = this.enabled ? 'ON' : 'OFF';
+        if (this.enabled) {
+          this.startBgm();
+          this.playTone(587.33, 0.09, 'sine', 0.06);
+        } else {
+          this.stopBgm();
+        }
+      },
+
+      sfxRotate() {
+        this.playTone(440, 0.055, 'triangle', 0.05, 0, 587.33);
+      },
+
+      sfxDrop() {
+        this.playTone(220, 0.08, 'sine', 0.07, 0, 110);
+      },
+
+      sfxHold() {
+        this.playTone(523.25, 0.06, 'sine', 0.05, 0);
+        this.playTone(659.25, 0.07, 'sine', 0.05, 0.05);
+      },
+
+      sfxClear(lines) {
+        const baseNotes = [523.25, 659.25, 783.99, 1046.5];
+        const count = Math.min(lines, 4);
+        for (let i = 0; i < count; i++) {
+          this.playBell(baseNotes[i], 0.18, 0.07, (this.ctx ? this.ctx.currentTime : 0) + i * 0.065);
+        }
+      },
+
+      sfxGameOver() {
+        this.stopBgm();
+        const notes = [392.0, 349.23, 329.63, 261.63];
+        notes.forEach((n, idx) => {
+          this.playTone(n, 0.16, 'sawtooth', 0.045, idx * 0.12);
+        });
+      },
+    };
+
+    function syncBgmWithGameState() {
+      if (!soundEngine.enabled) {
+        soundEngine.stopBgm();
+        return;
+      }
+      if (!state.paused && !state.gameOver) {
+        soundEngine.startBgm();
+      } else {
+        soundEngine.stopBgm();
+      }
+    }
+
+    function createEmptyBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    }
+
+    function createBag() {
+      const bag = Object.keys(SHAPES);
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      return bag;
+    }
+
+    function getMatrix(type, rot) {
+      return SHAPES[type][((rot % 4) + 4) % 4];
+    }
+
+    function collides(grid, type, rot, x, y) {
+      const shape = getMatrix(type, rot);
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (!shape[r][c]) continue;
+          const nx = x + c;
+          const ny = y + r;
+          if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+          if (ny >= 0 && grid[ny][nx]) return true;
+        }
+      }
+      return false;
+    }
+
+    const state = {
+      grid: createEmptyBoard(),
+      bag: [],
+      nextType: null,
+      holdType: null,
+      canHold: true,
+      current: null,
+      score: 0,
+      lines: 0,
+      level: 1,
+      paused: false,
+      gameOver: false,
+      aiEnabled: false,
+      aiDelay: 45,
+      aiPlan: null,
+      lastAiStep: 0,
+      dropAccumulator: 0,
+      lastFrameTime: 0,
+    };
+
+    function drawFromBag() {
+      if (state.bag.length === 0) {
+        state.bag = createBag();
+      }
+      return state.bag.pop();
+    }
+
+    function spawnPiece(forcedType = null) {
+      const type = forcedType || state.nextType || drawFromBag();
+      state.nextType = drawFromBag();
+      const shape = getMatrix(type, 0);
+      const startX = Math.floor((COLS - shape[0].length) / 2);
+      const startY = type === 'I' ? -1 : 0;
+
+      state.current = {
+        type,
+        rot: 0,
+        x: startX,
+        y: startY,
+      };
+      state.canHold = true;
+      state.aiPlan = null;
+
+      if (collides(state.grid, type, 0, startX, startY)) {
+        state.gameOver = true;
+        state.aiEnabled = false;
+        updateAiUi();
+        soundEngine.sfxGameOver();
+        showOverlay('게임 오버', `최종 점수: ${state.score.toLocaleString()}점`, '다시 시작');
+      }
+    }
+
+    function resetGame() {
+      state.grid = createEmptyBoard();
+      state.bag = createBag();
+      state.nextType = drawFromBag();
+      state.holdType = null;
+      state.canHold = true;
+      state.score = 0;
+      state.lines = 0;
+      state.level = 1;
+      state.paused = false;
+      state.gameOver = false;
+      state.aiPlan = null;
+      state.dropAccumulator = 0;
+      hideOverlay();
+      updateStats();
+      spawnPiece();
+      syncBgmWithGameState();
+    }
+
+    function showOverlay(title, desc, btnText) {
+      overlayTitleEl.textContent = title;
+      overlayDescEl.textContent = desc;
+      overlayBtnEl.textContent = btnText;
+      overlayEl.classList.add('visible');
+    }
+
+    function hideOverlay() {
+      overlayEl.classList.remove('visible');
+    }
+
+    function togglePause() {
+      if (state.gameOver) return;
+      state.paused = !state.paused;
+      if (state.paused) {
+        showOverlay('일시정지', '계속하려면 재개 버튼을 누르거나 P를 입력하세요.', '계속하기');
+      } else {
+        hideOverlay();
+        state.lastFrameTime = performance.now();
+      }
+      syncBgmWithGameState();
+    }
+
+    function updateStats() {
+      scoreEl.textContent = state.score.toLocaleString();
+      linesEl.textContent = state.lines.toLocaleString();
+      levelEl.textContent = state.level.toLocaleString();
+    }
+
+    function getDropInterval() {
+      return Math.max(80, 750 - (state.level - 1) * 60);
+    }
+
+    function movePiece(dx, dy) {
+      if (!state.current || state.paused || state.gameOver) return false;
+      const nx = state.current.x + dx;
+      const ny = state.current.y + dy;
+      if (!collides(state.grid, state.current.type, state.current.rot, nx, ny)) {
+        state.current.x = nx;
+        state.current.y = ny;
+        return true;
+      }
+      return false;
+    }
+
+    function rotatePiece(dir = 1) {
+      if (!state.current || state.paused || state.gameOver) return false;
+      const nextRot = (state.current.rot + dir + 4) % 4;
+      const kicks = [0, -1, 1, -2, 2];
+      for (const offset of kicks) {
+        const nx = state.current.x + offset;
+        if (!collides(state.grid, state.current.type, nextRot, nx, state.current.y)) {
+          state.current.x = nx;
+          state.current.rot = nextRot;
+          soundEngine.sfxRotate();
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function getGhostY() {
+      if (!state.current) return 0;
+      let gy = state.current.y;
+      while (!collides(state.grid, state.current.type, state.current.rot, state.current.x, gy + 1)) {
+        gy++;
+      }
+      return gy;
+    }
+
+    function clearLines() {
+      let cleared = 0;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (state.grid[r].every((cell) => cell !== null)) {
+          state.grid.splice(r, 1);
+          state.grid.unshift(Array(COLS).fill(null));
+          cleared++;
+          r++;
+        }
+      }
+      if (cleared > 0) {
+        state.lines += cleared;
+        state.score += (LINE_SCORES[cleared] || cleared * 200) * state.level;
+        state.level = Math.floor(state.lines / 10) + 1;
+        updateStats();
+        soundEngine.sfxClear(cleared);
+      }
+    }
+
+    function lockPiece() {
+      if (!state.current) return;
+      const { type, rot, x, y } = state.current;
+      const shape = getMatrix(type, rot);
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (!shape[r][c]) continue;
+          const ny = y + r;
+          const nx = x + c;
+          if (ny >= 0 && ny < ROWS && nx >= 0 && nx < COLS) {
+            state.grid[ny][nx] = type;
+          }
+        }
+      }
+      clearLines();
+      spawnPiece();
+    }
+
+    function hardDrop() {
+      if (!state.current || state.paused || state.gameOver) return;
+      let dropDistance = 0;
+      while (movePiece(0, 1)) {
+        dropDistance++;
+      }
+      state.score += dropDistance * 2;
+      updateStats();
+      soundEngine.sfxDrop();
+      lockPiece();
+    }
+
+    function holdPiece() {
+      if (!state.current || !state.canHold || state.paused || state.gameOver) return;
+      const currentType = state.current.type;
+      if (state.holdType) {
+        const swapType = state.holdType;
+        state.holdType = currentType;
+        spawnPiece(swapType);
+      } else {
+        state.holdType = currentType;
+        spawnPiece();
+      }
+      state.canHold = false;
+      soundEngine.sfxHold();
+    }
+
+    // =========================================================================
+    // AI 에이전트: 휴리스틱 보드 평가 + 최적 착지 탐색
+    // =========================================================================
+    function cloneGrid(grid) {
+      return grid.map((row) => row.slice());
+    }
+
+    function simulatePlacement(baseGrid, type, rot, targetX) {
+      const shape = getMatrix(type, rot);
+      let y = type === 'I' ? -1 : 0;
+
+      if (collides(baseGrid, type, rot, targetX, y)) {
+        return null;
+      }
+      while (!collides(baseGrid, type, rot, targetX, y + 1)) {
+        y++;
+      }
+
+      const nextGrid = cloneGrid(baseGrid);
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (!shape[r][c]) continue;
+          const ny = y + r;
+          const nx = targetX + c;
+          if (ny < 0) return null;
+          if (ny < ROWS && nx >= 0 && nx < COLS) {
+            nextGrid[ny][nx] = type;
+          }
+        }
+      }
+
+      let linesCleared = 0;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (nextGrid[r].every((cell) => cell !== null)) {
+          nextGrid.splice(r, 1);
+          nextGrid.unshift(Array(COLS).fill(null));
+          linesCleared++;
+          r++;
+        }
+      }
+
+      return { grid: nextGrid, linesCleared, finalY: y };
+    }
+
+    function evaluateGrid(grid, linesCleared) {
+      const heights = Array(COLS).fill(0);
+      let holes = 0;
+      let aggregateHeight = 0;
+
+      for (let c = 0; c < COLS; c++) {
+        let blockFound = false;
+        for (let r = 0; r < ROWS; r++) {
+          if (grid[r][c] !== null) {
+            if (!blockFound) {
+              heights[c] = ROWS - r;
+              aggregateHeight += heights[c];
+              blockFound = true;
+            }
+          } else if (blockFound) {
+            holes++;
+          }
+        }
+      }
+
+      let bumpiness = 0;
+      for (let c = 0; c < COLS - 1; c++) {
+        bumpiness += Math.abs(heights[c] - heights[c + 1]);
+      }
+
+      const maxHeight = Math.max(...heights);
+
+      return (
+        linesCleared * 760 -
+        holes * 420 -
+        aggregateHeight * 5.2 -
+        bumpiness * 18 -
+        maxHeight * 12
+      );
+    }
+
+    function findBestMoveForType(grid, type) {
+      let best = null;
+      for (let rot = 0; rot < 4; rot++) {
+        const shape = getMatrix(type, rot);
+        const minX = -shape[0].length;
+        const maxX = COLS;
+
+        for (let x = minX; x <= maxX; x++) {
+          const sim = simulatePlacement(grid, type, rot, x);
+          if (!sim) continue;
+          const score = evaluateGrid(sim.grid, sim.linesCleared);
+          if (!best || score > best.score) {
+            best = { rot, x, score };
+          }
+        }
+      }
+      return best;
+    }
+
+    function computeAiPlan() {
+      if (!state.current) return null;
+
+      const currentBest = findBestMoveForType(state.grid, state.current.type);
+      let useHold = false;
+      let chosenBest = currentBest;
+
+      if (state.canHold) {
+        const holdCandidateType = state.holdType || state.nextType;
+        if (holdCandidateType) {
+          const holdBest = findBestMoveForType(state.grid, holdCandidateType);
+          if (holdBest && (!chosenBest || holdBest.score - 25 > chosenBest.score)) {
+            chosenBest = holdBest;
+            useHold = true;
+          }
+        }
+      }
+
+      if (!chosenBest) return null;
+      return {
+        useHold,
+        targetRot: chosenBest.rot,
+        targetX: chosenBest.x,
+      };
+    }
+
+    function stepAi(now) {
+      if (!state.aiEnabled || state.paused || state.gameOver || !state.current) return;
+      if (now - state.lastAiStep < state.aiDelay) return;
+      state.lastAiStep = now;
+
+      if (!state.aiPlan) {
+        state.aiPlan = computeAiPlan();
+        if (!state.aiPlan) return;
+      }
+
+      if (state.aiPlan.useHold) {
+        state.aiPlan.useHold = false;
+        holdPiece();
+        return;
+      }
+
+      const cur = state.current;
+      if (cur.rot !== state.aiPlan.targetRot) {
+        const diff = (state.aiPlan.targetRot - cur.rot + 4) % 4;
+        rotatePiece(diff === 3 ? -1 : 1);
+        return;
+      }
+
+      if (cur.x < state.aiPlan.targetX) {
+        movePiece(1, 0);
+        return;
+      }
+
+      if (cur.x > state.aiPlan.targetX) {
+        movePiece(-1, 0);
+        return;
+      }
+
+      hardDrop();
+    }
+
+    // =========================================================================
+    // 렌더링
+    // =========================================================================
+    function drawCell(context, x, y, size, color, alpha = 1) {
+      context.save();
+      context.globalAlpha = alpha;
+      context.fillStyle = color;
+      context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+
+      context.fillStyle = 'rgba(255, 255, 255, 0.22)';
+      context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+      context.restore();
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let c = 1; c < COLS; c++) {
+        ctx.beginPath();
+        ctx.moveTo(c * BLOCK, 0);
+        ctx.lineTo(c * BLOCK, boardCanvas.height);
+        ctx.stroke();
+      }
+      for (let r = 1; r < ROWS; r++) {
+        ctx.beginPath();
+        ctx.moveTo(0, r * BLOCK);
+        ctx.lineTo(boardCanvas.width, r * BLOCK);
+        ctx.stroke();
+      }
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = state.grid[r][c];
+          if (cell) {
+            drawCell(ctx, c, r, BLOCK, COLORS[cell]);
+          }
+        }
+      }
+
+      if (!state.current) return;
+
+      const ghostY = getGhostY();
+      const shape = getMatrix(state.current.type, state.current.rot);
+      const color = COLORS[state.current.type];
+
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (!shape[r][c]) continue;
+          const gx = state.current.x + c;
+          const gy = ghostY + r;
+          if (gy >= 0) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = 0.35;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(gx * BLOCK + 2, gy * BLOCK + 2, BLOCK - 4, BLOCK - 4);
+            ctx.restore();
+          }
+        }
+      }
+
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (!shape[r][c]) continue;
+          const px = state.current.x + c;
+          const py = state.current.y + r;
+          if (py >= 0) {
+            drawCell(ctx, px, py, BLOCK, color);
+          }
+        }
+      }
+    }
+
+    function drawMiniPiece(context, canvas, type) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      if (!type) return;
+      const shape = SHAPES[type][0];
+      const cellSize = 15;
+      const offsetX = (canvas.width - shape[0].length * cellSize) / 2 / cellSize;
+      const offsetY = (canvas.height - shape.length * cellSize) / 2 / cellSize;
+
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (!shape[r][c]) continue;
+          drawCell(context, offsetX + c, offsetY + r, cellSize, COLORS[type]);
+        }
+      }
+    }
+
+    function render() {
+      drawBoard();
+      drawMiniPiece(holdCtx, holdCanvas, state.holdType);
+      drawMiniPiece(nextCtx, nextCanvas, state.nextType);
+    }
+
+    // =========================================================================
+    // 메인 루프 및 이벤트 핸들러
+    // =========================================================================
+    function updateAiUi() {
+      if (state.aiEnabled) {
+        toggleAiBtn.textContent = 'AI 에이전트 끄기 (A)';
+        toggleAiBtn.classList.add('ai-active');
+        aiBadge.textContent = 'ON';
+        aiBadge.classList.add('on');
+      } else {
+        toggleAiBtn.textContent = 'AI 에이전트 켜기 (A)';
+        toggleAiBtn.classList.remove('ai-active');
+        aiBadge.textContent = 'OFF';
+        aiBadge.classList.remove('on');
+      }
+    }
+
+    function toggleAi() {
+      if (state.gameOver) return;
+      state.aiEnabled = !state.aiEnabled;
+      state.aiPlan = null;
+      state.lastAiStep = performance.now();
+      updateAiUi();
+      syncBgmWithGameState();
+    }
+
+    function loop(now) {
+      if (!state.lastFrameTime) state.lastFrameTime = now;
+      const dt = now - state.lastFrameTime;
+      state.lastFrameTime = now;
+
+      if (!state.paused && !state.gameOver) {
+        stepAi(now);
+
+        if (!state.aiEnabled) {
+          state.dropAccumulator += dt;
+          const interval = getDropInterval();
+          if (state.dropAccumulator >= interval) {
+            state.dropAccumulator = 0;
+            if (!movePiece(0, 1)) {
+              lockPiece();
+            }
+          }
+        }
+      }
+
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    soundOnRadio.addEventListener('change', () => {
+      if (soundOnRadio.checked) {
+        soundEngine.setEnabled(true);
+        syncBgmWithGameState();
+      }
+    });
+
+    soundOffRadio.addEventListener('change', () => {
+      if (soundOffRadio.checked) {
+        soundEngine.setEnabled(false);
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', 'Space', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      if (soundEngine.enabled && !state.paused && !state.gameOver) {
+        soundEngine.startBgm();
+      }
+
+      const key = e.key.toLowerCase();
+      if (key === 'a') {
+        toggleAi();
+        return;
+      }
+      if (key === 'p') {
+        togglePause();
+        return;
+      }
+      if (key === 'r') {
+        resetGame();
+        return;
+      }
+      if (state.paused || state.gameOver) return;
+
+      if (e.key === 'ArrowLeft') {
+        state.aiEnabled = false;
+        updateAiUi();
+        movePiece(-1, 0);
+      } else if (e.key === 'ArrowRight') {
+        state.aiEnabled = false;
+        updateAiUi();
+        movePiece(1, 0);
+      } else if (e.key === 'ArrowDown') {
+        state.aiEnabled = false;
+        updateAiUi();
+        if (movePiece(0, 1)) {
+          state.score += 1;
+          updateStats();
+        }
+      } else if (e.key === 'ArrowUp' || key === 'x') {
+        state.aiEnabled = false;
+        updateAiUi();
+        rotatePiece(1);
+      } else if (e.code === 'Space') {
+        state.aiEnabled = false;
+        updateAiUi();
+        hardDrop();
+      } else if (key === 'c' || e.key === 'Shift') {
+        state.aiEnabled = false;
+        updateAiUi();
+        holdPiece();
+      }
+    });
+
+    toggleAiBtn.addEventListener('click', toggleAi);
+    pauseBtn.addEventListener('click', togglePause);
+    restartBtn.addEventListener('click', resetGame);
+    overlayBtnEl.addEventListener('click', () => {
+      if (state.gameOver) {
+        resetGame();
+      } else {
+        togglePause();
+      }
+    });
+
+    aiSpeedSlider.addEventListener('input', (e) => {
+      state.aiDelay = Number(e.target.value);
+      aiSpeedVal.textContent = `${state.aiDelay}ms`;
+    });
+
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
