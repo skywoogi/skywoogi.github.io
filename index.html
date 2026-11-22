@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HTML5 테트리스 & AI 에이전트</title>
+  <title>1~12월 테트리스 & AI 에이전트</title>
   <style>
     :root {
       --bg: #0d1117;
@@ -15,7 +15,7 @@
       --accent-hover: #58a6ff;
       --success: #238636;
       --danger: #da3633;
-      --grid: rgba(255, 255, 255, 0.04);
+      --grid: rgba(255, 255, 255, 0.05);
     }
 
     * {
@@ -25,14 +25,14 @@
     }
 
     body {
-      background: radial-gradient(circle at top, #161f2e 0%, var(--bg) 65%);
+      background: radial-gradient(circle at top, #182234 0%, var(--bg) 68%);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      padding: 18px;
     }
 
     .app {
@@ -47,30 +47,56 @@
       position: relative;
       background: #090c10;
       border: 2px solid var(--panel-border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 10px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 22px 54px rgba(0, 0, 0, 0.65);
     }
 
     canvas#board {
       display: block;
-      background: var(--grid);
-      border-radius: 6px;
+      background: #0b1018;
+      border-radius: 8px;
+    }
+
+    .stage-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      background: rgba(22, 27, 34, 0.92);
+      border: 1px solid var(--panel-border);
+      font-size: 0.85rem;
+    }
+
+    .stage-name {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stage-goal {
+      color: var(--accent-hover);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
     }
 
     .overlay {
       position: absolute;
       inset: 10px;
-      background: rgba(9, 12, 16, 0.86);
+      background: rgba(9, 12, 16, 0.88);
       backdrop-filter: blur(4px);
-      border-radius: 6px;
+      border-radius: 8px;
       display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       text-align: center;
       padding: 20px;
+      z-index: 5;
     }
 
     .overlay.visible {
@@ -78,36 +104,86 @@
     }
 
     .overlay h2 {
-      font-size: 1.8rem;
-      letter-spacing: 1px;
+      font-size: 1.6rem;
+      letter-spacing: 0.5px;
     }
 
     .overlay p {
       color: var(--muted);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
+      line-height: 1.5;
     }
 
-    .sidebar {
-      width: 240px;
+    .celebration-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 14, 0.9);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 50;
+    }
+
+    .celebration-modal.visible {
+      display: flex;
+    }
+
+    .celebration-card {
+      width: min(540px, 100%);
+      background: #121824;
+      border: 1px solid #384661;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8);
       display: flex;
       flex-direction: column;
       gap: 14px;
+      text-align: center;
+    }
+
+    .celebration-card h2 {
+      font-size: 1.45rem;
+      color: #ffd166;
+    }
+
+    .celebration-card p {
+      font-size: 0.9rem;
+      color: #c9d1d9;
+      line-height: 1.45;
+    }
+
+    canvas#celebrationVideo {
+      width: 100%;
+      height: 290px;
+      border-radius: 12px;
+      background: #070b14;
+      border: 1px solid #2b3852;
+      display: block;
+    }
+
+    .sidebar {
+      width: 248px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .card {
       background: var(--panel);
       border: 1px solid var(--panel-border);
       border-radius: 12px;
-      padding: 14px;
+      padding: 13px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     }
 
     .card-title {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
-      margin-bottom: 10px;
+      margin-bottom: 9px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -120,20 +196,18 @@
     }
 
     .radio-option {
-      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 8px 10px;
+      padding: 7px 9px;
       border-radius: 8px;
       background: #0d1117;
       border: 1px solid var(--panel-border);
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 600;
       color: var(--muted);
       cursor: pointer;
-      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
       user-select: none;
     }
 
@@ -145,14 +219,21 @@
     .radio-option:has(input[type="radio"]:checked) {
       border-color: var(--accent);
       color: var(--text);
-      background: rgba(47, 129, 247, 0.12);
+      background: rgba(47, 129, 247, 0.14);
+    }
+
+    .audio-hint {
+      margin-top: 7px;
+      font-size: 0.73rem;
+      color: var(--muted);
+      line-height: 1.35;
     }
 
     .stat-row {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
 
     .stat-row:last-child {
@@ -161,11 +242,11 @@
 
     .stat-label {
       color: var(--muted);
-      font-size: 0.88rem;
+      font-size: 0.86rem;
     }
 
     .stat-value {
-      font-size: 1.15rem;
+      font-size: 1.08rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
@@ -198,16 +279,16 @@
 
     button {
       width: 100%;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border: none;
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
       color: #fff;
       background: var(--accent);
       transition: background 0.15s ease, transform 0.05s ease;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
 
     button:last-child {
@@ -246,9 +327,9 @@
     .slider-label {
       display: flex;
       justify-content: space-between;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
 
     input[type="range"] {
@@ -274,9 +355,9 @@
 
     .controls-list {
       list-style: none;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--muted);
-      line-height: 1.65;
+      line-height: 1.6;
     }
 
     .controls-list kbd {
@@ -286,13 +367,17 @@
       padding: 1px 5px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       color: var(--text);
-      font-size: 0.75rem;
+      font-size: 0.74rem;
     }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="board-container">
+      <div class="stage-banner">
+        <span id="stageName" class="stage-name">❄️ 1월 · 새해 설원</span>
+        <span id="stageGoal" class="stage-goal">0 / 10 라인</span>
+      </div>
       <canvas id="board" width="300" height="600"></canvas>
       <div id="overlay" class="overlay">
         <h2 id="overlayTitle">일시정지</h2>
@@ -317,6 +402,7 @@
             <span>끔</span>
           </label>
         </div>
+        <p id="audioHint" class="audio-hint">화면 클릭 또는 키 입력 시 월별 음악이 재생됩니다.</p>
       </div>
 
       <div class="card">
@@ -328,25 +414,29 @@
         <div class="slider-wrap">
           <div class="slider-label">
             <span>AI 이동 딜레이</span>
-            <span id="aiSpeedVal">45ms</span>
+            <span id="aiSpeedVal">35ms</span>
           </div>
-          <input id="aiSpeedSlider" type="range" min="10" max="250" step="5" value="45" />
+          <input id="aiSpeedSlider" type="range" min="10" max="250" step="5" value="35" />
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title"><span>기록</span></div>
+        <div class="card-title"><span>스테이지 & 기록</span></div>
+        <div class="stat-row">
+          <span class="stat-label">현재 스테이지</span>
+          <span id="stageLabel" class="stat-value">1월</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">스테이지 라인</span>
+          <span id="stageLines" class="stat-value">0 / 10</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">총 라인</span>
+          <span id="totalLines" class="stat-value">0</span>
+        </div>
         <div class="stat-row">
           <span class="stat-label">점수</span>
           <span id="score" class="stat-value">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">라인</span>
-          <span id="lines" class="stat-value">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">레벨</span>
-          <span id="level" class="stat-value">1</span>
         </div>
       </div>
 
@@ -367,23 +457,33 @@
       <div class="card">
         <div class="card-title"><span>제어</span></div>
         <button id="pauseBtn" class="secondary" type="button">일시정지 (P)</button>
-        <button id="restartBtn" class="secondary" type="button">새 게임 (R)</button>
-        <ul class="controls-list" style="margin-top: 10px;">
-          <li><kbd>←</kbd> <kbd>→</kbd> 좌우 이동</li>
-          <li><kbd>↑</kbd> <kbd>X</kbd> 회전</li>
-          <li><kbd>↓</kbd> 소프트 드롭</li>
-          <li><kbd>Space</kbd> 하드 드롭</li>
-          <li><kbd>C</kbd> / <kbd>Shift</kbd> 홀드</li>
-          <li><kbd>A</kbd> AI 전환 · <kbd>P</kbd> 정지</li>
+        <button id="restartBtn" class="secondary" type="button">처음부터 (R)</button>
+        <ul class="controls-list" style="margin-top: 8px;">
+          <li><kbd>←</kbd> <kbd>→</kbd> 좌우 이동 · <kbd>↑</kbd> <kbd>X</kbd> 회전</li>
+          <li><kbd>↓</kbd> 소프트 드롭 · <kbd>Space</kbd> 하드 드롭</li>
+          <li><kbd>C</kbd> / <kbd>Shift</kbd> 홀드 · <kbd>A</kbd> AI · <kbd>P</kbd> 정지</li>
         </ul>
       </div>
     </div>
   </div>
 
+  <!-- 최종 클리어 축하 영상 모달 -->
+  <div id="celebrationModal" class="celebration-modal" aria-hidden="true">
+    <div class="celebration-card">
+      <h2>🎉 1월~12월 & 보너스 올클리어 축하합니다! 🎉</h2>
+      <canvas id="celebrationVideo" width="500" height="290"></canvas>
+      <p id="celebrationSummary">모든 월간 스테이지와 2배 대형/소형 블록 챌린지를 완주했습니다!</p>
+      <button id="replayCelebrationBtn" class="secondary" type="button">축하 영상 다시 보기</button>
+      <button id="playAgainFromEndBtn" type="button">1월부터 다시 도전하기</button>
+    </div>
+  </div>
+
   <script>
-    const COLS = 10;
-    const ROWS = 20;
-    const BLOCK = 30;
+    const BASE_WIDTH = 300;
+    const BASE_HEIGHT = 600;
+    const BASE_COLS = 10;
+    const BASE_ROWS = 20;
+    const BASE_BLOCK = 30;
 
     const COLORS = {
       I: '#38bdf8',
@@ -554,6 +654,291 @@
 
     const LINE_SCORES = [0, 100, 300, 500, 800];
 
+    const NOTE = {
+      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+      C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
+      C6: 1046.50,
+      REST: 0,
+    };
+
+    // 1~12월 + 보너스 2단계(2배 대형 블록, 2배 소형 블록) 정의
+    const STAGES = [
+      {
+        id: 'jan',
+        shortName: '1월',
+        bannerTitle: '❄️ 1월 · 새해 설원',
+        targetLines: 10,
+        dropInterval: 720,
+        tempo: 118,
+        wave: 'sine',
+        bgTop: '#0d2238',
+        bgBottom: '#07111e',
+        accentColor: '#7dd3fc',
+        motif: '❄️',
+        melody: [
+          ['E5', 1], ['D5', 1], ['C5', 1], ['D5', 1],
+          ['E5', 1], ['E5', 1], ['E5', 2],
+          ['D5', 1], ['D5', 1], ['D5', 2],
+          ['E5', 1], ['G5', 1], ['G5', 2],
+        ],
+      },
+      {
+        id: 'feb',
+        shortName: '2월',
+        bannerTitle: '💘 2월 · 겨울 밤하늘',
+        targetLines: 20,
+        dropInterval: 670,
+        tempo: 122,
+        wave: 'triangle',
+        bgTop: '#241438',
+        bgBottom: '#10091c',
+        accentColor: '#f472b6',
+        motif: '✨',
+        melody: [
+          ['C5', 1], ['E5', 1], ['G5', 1], ['E5', 1],
+          ['F5', 1], ['E5', 1], ['D5', 2],
+          ['B4', 1], ['D5', 1], ['F5', 1], ['D5', 1],
+          ['E5', 2], ['C5', 2],
+        ],
+      },
+      {
+        id: 'mar',
+        shortName: '3월',
+        bannerTitle: '🌸 3월 · 봄바람 왈츠',
+        targetLines: 30,
+        dropInterval: 620,
+        tempo: 128,
+        wave: 'triangle',
+        bgTop: '#163327',
+        bgBottom: '#091711',
+        accentColor: '#f9a8d4',
+        motif: '🌸',
+        melody: [
+          ['G4', 1], ['C5', 1], ['E5', 1],
+          ['D5', 1], ['B4', 1], ['G4', 1],
+          ['A4', 1], ['C5', 1], ['F5', 1],
+          ['E5', 2], ['C5', 1],
+        ],
+      },
+      {
+        id: 'apr',
+        shortName: '4월',
+        bannerTitle: '🌼 4월 · 벚꽃 멜로디',
+        targetLines: 40,
+        dropInterval: 575,
+        tempo: 132,
+        wave: 'sine',
+        bgTop: '#2a2414',
+        bgBottom: '#131008',
+        accentColor: '#fde047',
+        motif: '🌼',
+        melody: [
+          ['E5', 1], ['E5', 0.5], ['F5', 0.5], ['G5', 1], ['E5', 1],
+          ['D5', 1], ['C5', 1], ['D5', 2],
+          ['C5', 1], ['D5', 0.5], ['E5', 0.5], ['G5', 1], ['E5', 1],
+          ['D5', 2], ['REST', 2],
+        ],
+      },
+      {
+        id: 'may',
+        shortName: '5월',
+        bannerTitle: '🌿 5월 · 싱그러운 신록',
+        targetLines: 50,
+        dropInterval: 530,
+        tempo: 136,
+        wave: 'triangle',
+        bgTop: '#113626',
+        bgBottom: '#071811',
+        accentColor: '#4ade80',
+        motif: '🌿',
+        melody: [
+          ['C5', 0.5], ['D5', 0.5], ['E5', 1], ['G5', 1], ['E5', 1],
+          ['A5', 1], ['G5', 1], ['E5', 2],
+          ['F5', 1], ['A5', 1], ['G5', 1], ['E5', 1],
+          ['D5', 2], ['C5', 2],
+        ],
+      },
+      {
+        id: 'jun',
+        shortName: '6월',
+        bannerTitle: '☀️ 6월 · 초여름 햇살',
+        targetLines: 60,
+        dropInterval: 490,
+        tempo: 140,
+        wave: 'triangle',
+        bgTop: '#142c44',
+        bgBottom: '#081422',
+        accentColor: '#fbbf24',
+        motif: '☀️',
+        melody: [
+          ['G4', 0.5], ['C5', 0.5], ['E5', 0.5], ['G5', 0.5], ['A5', 1], ['G5', 1],
+          ['E5', 1], ['C5', 1], ['D5', 2],
+          ['F5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['D5', 1], ['E5', 1],
+          ['C5', 2], ['REST', 2],
+        ],
+      },
+      {
+        id: 'jul',
+        shortName: '7월',
+        bannerTitle: '🌊 7월 · 한여름 파도',
+        targetLines: 70,
+        dropInterval: 450,
+        tempo: 144,
+        wave: 'sine',
+        bgTop: '#0b2d47',
+        bgBottom: '#051524',
+        accentColor: '#38bdf8',
+        motif: '🌊',
+        melody: [
+          ['E5', 0.5], ['G5', 0.5], ['C6', 1], ['B5', 0.5], ['A5', 0.5], ['G5', 1],
+          ['E5', 1], ['F5', 1], ['G5', 2],
+          ['A5', 0.5], ['G5', 0.5], ['E5', 1], ['D5', 0.5], ['E5', 0.5], ['C5', 1],
+          ['D5', 2], ['C5', 2],
+        ],
+      },
+      {
+        id: 'aug',
+        shortName: '8월',
+        bannerTitle: '🎆 8월 · 한여름 밤 불꽃',
+        targetLines: 80,
+        dropInterval: 410,
+        tempo: 148,
+        wave: 'triangle',
+        bgTop: '#2c173d',
+        bgBottom: '#12081c',
+        accentColor: '#fb7185',
+        motif: '🎆',
+        melody: [
+          ['C5', 0.5], ['E5', 0.5], ['G5', 0.5], ['C6', 0.5], ['B5', 1], ['G5', 1],
+          ['A5', 0.5], ['G5', 0.5], ['F5', 0.5], ['D5', 0.5], ['E5', 2],
+          ['G5', 0.5], ['A5', 0.5], ['C6', 1], ['A5', 0.5], ['G5', 0.5], ['E5', 1],
+          ['G5', 2], ['C5', 2],
+        ],
+      },
+      {
+        id: 'sep',
+        shortName: '9월',
+        bannerTitle: '🍂 9월 · 선선한 가을바람',
+        targetLines: 90,
+        dropInterval: 375,
+        tempo: 138,
+        wave: 'sine',
+        bgTop: '#382112',
+        bgBottom: '#180d07',
+        accentColor: '#fb923c',
+        motif: '🍂',
+        melody: [
+          ['A4', 1], ['C5', 1], ['E5', 1], ['D5', 1],
+          ['C5', 1], ['B4', 1], ['A4', 2],
+          ['E5', 1], ['D5', 0.5], ['C5', 0.5], ['B4', 1], ['G4', 1],
+          ['A4', 2], ['REST', 2],
+        ],
+      },
+      {
+        id: 'oct',
+        shortName: '10월',
+        bannerTitle: '🎃 10월 · 단풍과 미스터리',
+        targetLines: 100,
+        dropInterval: 340,
+        tempo: 146,
+        wave: 'triangle',
+        bgTop: '#331926',
+        bgBottom: '#160910',
+        accentColor: '#f97316',
+        motif: '🎃',
+        melody: [
+          ['A4', 0.5], ['C5', 0.5], ['E5', 0.5], ['A4', 0.5], ['G4', 1], ['A4', 1],
+          ['C5', 0.5], ['D5', 0.5], ['E5', 1], ['D5', 1], ['B4', 1],
+          ['A4', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['B4', 1], ['G4', 1],
+          ['A4', 2], ['REST', 2],
+        ],
+      },
+      {
+        id: 'nov',
+        shortName: '11월',
+        bannerTitle: '🍁 11월 · 늦가을 노을',
+        targetLines: 110,
+        dropInterval: 305,
+        tempo: 135,
+        wave: 'sine',
+        bgTop: '#2a1c36',
+        bgBottom: '#120b18',
+        accentColor: '#c084fc',
+        motif: '🍁',
+        melody: [
+          ['G4', 1], ['A4', 0.5], ['B4', 0.5], ['D5', 1], ['C5', 1],
+          ['B4', 1], ['G4', 1], ['A4', 2],
+          ['D5', 1], ['E5', 0.5], ['D5', 0.5], ['B4', 1], ['G4', 1],
+          ['A4', 2], ['G4', 2],
+        ],
+      },
+      {
+        id: 'dec',
+        shortName: '12월',
+        bannerTitle: '🎄 12월 · 크리스마스 벨 캐럴',
+        targetLines: 120,
+        dropInterval: 270,
+        tempo: 132,
+        wave: 'sine',
+        bgTop: '#133127',
+        bgBottom: '#081712',
+        accentColor: '#f87171',
+        motif: '🎄',
+        isChristmas: true,
+        melody: [
+          ['E5', 1], ['B4', 0.5], ['C5', 0.5], ['D5', 1], ['C5', 0.5], ['B4', 0.5],
+          ['A4', 1], ['A4', 0.5], ['C5', 0.5], ['E5', 1], ['D5', 0.5], ['C5', 0.5],
+          ['B4', 1.5], ['C5', 0.5], ['D5', 1], ['E5', 1],
+          ['C5', 1], ['A4', 1], ['A4', 1.5], ['REST', 0.5],
+          ['D5', 1.25], ['F5', 0.5], ['A5', 1], ['G5', 0.5], ['F5', 0.5],
+          ['E5', 1.5], ['C5', 0.5], ['E5', 1], ['D5', 0.5], ['C5', 0.5],
+          ['B4', 1], ['B4', 0.5], ['C5', 0.5], ['D5', 1], ['E5', 1],
+          ['C5', 1], ['A4', 1], ['A4', 2],
+        ],
+      },
+      {
+        id: 'bonus_big',
+        shortName: '2배 큰 블록',
+        bannerTitle: '🐘 보너스 · 블록 2배 크기 (10라인)',
+        targetLines: 10,
+        cols: 5,
+        rows: 10,
+        blockSize: 60,
+        dropInterval: 340,
+        tempo: 150,
+        wave: 'triangle',
+        bgTop: '#3b1d28',
+        bgBottom: '#190b10',
+        accentColor: '#facc15',
+        motif: '🐘',
+        melody: [
+          ['C5', 0.5], ['G5', 0.5], ['C6', 1], ['G5', 0.5], ['E5', 0.5], ['C5', 1],
+          ['F5', 0.5], ['A5', 0.5], ['G5', 1], ['E5', 1], ['D5', 1],
+          ['C5', 1], ['E5', 1], ['G5', 1], ['C6', 1],
+        ],
+      },
+      {
+        id: 'bonus_small',
+        shortName: '2배 작은 블록',
+        bannerTitle: '🐜 최종 보너스 · 블록 2배 작게 (10라인)',
+        targetLines: 10,
+        cols: 20,
+        rows: 40,
+        blockSize: 15,
+        dropInterval: 180,
+        tempo: 156,
+        wave: 'sine',
+        bgTop: '#16294a',
+        bgBottom: '#081020',
+        accentColor: '#38bdf8',
+        motif: '🐜',
+        melody: [
+          ['E5', 0.5], ['G5', 0.5], ['A5', 0.5], ['C6', 0.5], ['B5', 0.5], ['A5', 0.5], ['G5', 1],
+          ['F5', 0.5], ['A5', 0.5], ['G5', 0.5], ['E5', 0.5], ['D5', 0.5], ['E5', 0.5], ['C5', 1],
+        ],
+      },
+    ];
+
     const boardCanvas = document.getElementById('board');
     const ctx = boardCanvas.getContext('2d');
     const holdCanvas = document.getElementById('holdCanvas');
@@ -561,262 +946,309 @@
     const nextCanvas = document.getElementById('nextCanvas');
     const nextCtx = nextCanvas.getContext('2d');
 
+    const celebrationModal = document.getElementById('celebrationModal');
+    const celebrationVideo = document.getElementById('celebrationVideo');
+    const celebCtx = celebrationVideo.getContext('2d');
+    const celebrationSummaryEl = document.getElementById('celebrationSummary');
+    const replayCelebrationBtn = document.getElementById('replayCelebrationBtn');
+    const playAgainFromEndBtn = document.getElementById('playAgainFromEndBtn');
+
+    const stageNameEl = document.getElementById('stageName');
+    const stageGoalEl = document.getElementById('stageGoal');
+    const stageLabelEl = document.getElementById('stageLabel');
+    const stageLinesEl = document.getElementById('stageLines');
+    const totalLinesEl = document.getElementById('totalLines');
     const scoreEl = document.getElementById('score');
-    const linesEl = document.getElementById('lines');
-    const levelEl = document.getElementById('level');
+
     const overlayEl = document.getElementById('overlay');
     const overlayTitleEl = document.getElementById('overlayTitle');
     const overlayDescEl = document.getElementById('overlayDesc');
     const overlayBtnEl = document.getElementById('overlayBtn');
+
     const toggleAiBtn = document.getElementById('toggleAiBtn');
     const aiBadge = document.getElementById('aiBadge');
     const aiSpeedSlider = document.getElementById('aiSpeedSlider');
     const aiSpeedVal = document.getElementById('aiSpeedVal');
     const pauseBtn = document.getElementById('pauseBtn');
     const restartBtn = document.getElementById('restartBtn');
+
     const soundOnRadio = document.getElementById('soundOnRadio');
     const soundOffRadio = document.getElementById('soundOffRadio');
     const soundStatusLabel = document.getElementById('soundStatusLabel');
+    const audioHintEl = document.getElementById('audioHint');
 
     // =========================================================================
-    // 크리스마스 스타일 BGM + 효과음 엔진 (Web Audio API)
+    // 월별 음악 + 효과음 엔진 (즉시 음소거 보장)
     // =========================================================================
-    const NOTE_FREQ = {
-      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
-      C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00,
-      C3: 130.81, F3: 174.61, G3: 196.00, A3: 220.00,
-    };
-
-    // 경쾌한 8비트 캐럴 풍 멜로디 (음표 이름, 8분음표 기준 길이)
-    const XMAS_MELODY = [
-      ['E5', 1], ['E5', 1], ['E5', 2],
-      ['E5', 1], ['E5', 1], ['E5', 2],
-      ['E5', 1], ['G5', 1], ['C5', 1.5], ['D5', 0.5],
-      ['E5', 4],
-      ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5],
-      ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
-      ['E5', 1], ['D5', 1], ['D5', 1], ['E5', 1],
-      ['D5', 2], ['G5', 2],
-      ['E5', 1], ['E5', 1], ['E5', 2],
-      ['E5', 1], ['E5', 1], ['E5', 2],
-      ['E5', 1], ['G5', 1], ['C5', 1.5], ['D5', 0.5],
-      ['E5', 4],
-      ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5],
-      ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
-      ['G5', 1], ['G5', 1], ['F5', 1], ['D5', 1],
-      ['C5', 4],
-    ];
-
-    const XMAS_BASS = [
-      ['C3', 2], ['G3', 2],
-      ['C3', 2], ['G3', 2],
-      ['C3', 2], ['E4', 2],
-      ['C3', 2], ['G3', 2],
-      ['F3', 2], ['C4', 2],
-      ['C3', 2], ['G3', 2],
-      ['G3', 2], ['D4', 2],
-      ['G3', 2], ['G4', 2],
-      ['C3', 2], ['G3', 2],
-      ['C3', 2], ['G3', 2],
-      ['C3', 2], ['E4', 2],
-      ['C3', 2], ['G3', 2],
-      ['F3', 2], ['C4', 2],
-      ['C3', 2], ['G3', 2],
-      ['G3', 2], ['G3', 2],
-      ['C3', 4],
-    ];
-
     const soundEngine = {
       enabled: true,
+      isPlaying: false,
       ctx: null,
-      bgmTimer: null,
-      melodyIdx: 0,
-      bassIdx: 0,
-      nextMelodyTime: 0,
-      nextBassTime: 0,
-      eighthDuration: 60 / 152 / 2, // 152 BPM 기준 8분음표 길이
+      masterGain: null,
+      timerId: null,
+      step: 0,
+      nextNoteTime: 0,
+      activeStage: STAGES[0],
 
-      ensureContext() {
-        if (!this.enabled) return null;
+      get beatSec() {
+        return 60 / (this.activeStage?.tempo || 130);
+      },
+
+      setStage(stage) {
+        const changed = this.activeStage?.id !== stage.id;
+        this.activeStage = stage;
+        if (changed) {
+          this.step = 0;
+          if (this.ctx) {
+            this.nextNoteTime = this.ctx.currentTime + 0.04;
+          }
+        }
+      },
+
+      createContextIfNeeded() {
         if (!this.ctx) {
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
           if (!AudioCtx) return null;
           this.ctx = new AudioCtx();
-        }
-        if (this.ctx.state === 'suspended') {
-          this.ctx.resume().catch(() => {});
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.value = this.enabled ? 1 : 0;
+          this.masterGain.connect(this.ctx.destination);
         }
         return this.ctx;
       },
 
-      playTone(freq, duration, type = 'triangle', gainPeak = 0.08, delay = 0, slideTo = null) {
-        const audioCtx = this.ensureContext();
-        if (!audioCtx || !freq) return;
+      async unlock() {
+        if (!this.enabled) return null;
+        const audioCtx = this.createContextIfNeeded();
+        if (!audioCtx) return null;
 
-        const now = audioCtx.currentTime + delay;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, now);
-        if (slideTo) {
-          osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        if (this.masterGain) {
+          this.masterGain.gain.setValueAtTime(this.enabled ? 1 : 0, audioCtx.currentTime);
         }
 
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(gainPeak, now + 0.012);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        if (audioCtx.state === 'suspended') {
+          try {
+            await audioCtx.resume();
+          } catch (_) {
+            return null;
+          }
+        }
 
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        osc.start(now);
-        osc.stop(now + duration + 0.02);
+        if (!this.enabled) return null;
+        if (audioCtx.state === 'running' && audioHintEl) {
+          audioHintEl.textContent = `🎵 ${this.activeStage.shortName} 테마 음악 재생 중`;
+        }
+        return audioCtx;
       },
 
-      // 크리스마스 종소리(벨) 뉘앙스 추가
-      playBell(freq, duration, gainPeak = 0.055, time = null) {
-        const audioCtx = this.ensureContext();
-        if (!audioCtx || !freq) return;
+      playStageNote(freq, durationSec, startTime, volume = 0.18) {
+        if (!this.enabled || !freq || !this.ctx || !this.masterGain || this.ctx.state !== 'running') return;
+        if (this.masterGain.gain.value <= 0.0001) return;
 
-        const startAt = time !== null ? time : audioCtx.currentTime;
-        const osc1 = audioCtx.createOscillator();
-        const osc2 = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const osc2Gain = this.ctx.createGain();
 
-        osc1.type = 'sine';
+        osc1.type = this.activeStage?.wave || 'sine';
+        osc1.frequency.setValueAtTime(freq, startTime);
+
         osc2.type = 'triangle';
-        osc1.frequency.setValueAtTime(freq, startAt);
-        osc2.frequency.setValueAtTime(freq * 2, startAt);
+        osc2.frequency.setValueAtTime(freq * 2, startTime);
 
-        gain.gain.setValueAtTime(0.0001, startAt);
-        gain.gain.linearRampToValueAtTime(gainPeak, startAt + 0.008);
-        gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+        const harmonicWeight = this.activeStage?.isChristmas ? 0.22 : 0.12;
+        osc2Gain.gain.setValueAtTime(harmonicWeight, startTime);
+        osc2Gain.gain.exponentialRampToValueAtTime(0.001, startTime + Math.min(durationSec * 0.6, 0.24));
 
-        const subGain = audioCtx.createGain();
-        subGain.gain.setValueAtTime(0.25, startAt);
+        gain.gain.setValueAtTime(0.001, startTime);
+        gain.gain.linearRampToValueAtTime(volume, startTime + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0008, startTime + durationSec * 1.12);
 
         osc1.connect(gain);
-        osc2.connect(subGain);
-        subGain.connect(gain);
-        gain.connect(audioCtx.destination);
+        osc2.connect(osc2Gain);
+        osc2Gain.connect(gain);
+        gain.connect(this.masterGain);
 
-        osc1.start(startAt);
-        osc2.start(startAt);
-        osc1.stop(startAt + duration + 0.02);
-        osc2.stop(startAt + duration + 0.02);
+        osc1.start(startTime);
+        osc2.start(startTime);
+        osc1.stop(startTime + durationSec * 1.18);
+        osc2.stop(startTime + durationSec * 1.18);
       },
 
-      scheduleBgm() {
-        if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
-
-        const lookahead = 0.16;
-        while (this.nextMelodyTime < this.ctx.currentTime + lookahead) {
-          const [note, beats] = XMAS_MELODY[this.melodyIdx % XMAS_MELODY.length];
-          const dur = beats * this.eighthDuration;
-          this.playBell(NOTE_FREQ[note], dur * 0.92, 0.052, this.nextMelodyTime);
-          this.nextMelodyTime += dur;
-          this.melodyIdx++;
+      scheduler() {
+        if (!this.isPlaying || !this.enabled || !this.ctx || this.ctx.state !== 'running') {
+          this.stopBgm();
+          return;
         }
 
-        while (this.nextBassTime < this.ctx.currentTime + lookahead) {
-          const [note, beats] = XMAS_BASS[this.bassIdx % XMAS_BASS.length];
-          const dur = beats * this.eighthDuration;
-          const freq = NOTE_FREQ[note];
-          if (freq) {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, this.nextBassTime);
-            gain.gain.setValueAtTime(0.0001, this.nextBassTime);
-            gain.gain.linearRampToValueAtTime(0.06, this.nextBassTime + 0.015);
-            gain.gain.exponentialRampToValueAtTime(0.0001, this.nextBassTime + dur * 0.9);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(this.nextBassTime);
-            osc.stop(this.nextBassTime + dur + 0.02);
-          }
-          this.nextBassTime += dur;
-          this.bassIdx++;
+        const melody = this.activeStage?.melody || STAGES[0].melody;
+        while (this.nextNoteTime < this.ctx.currentTime + 0.15) {
+          const [noteName, beats] = melody[this.step % melody.length];
+          const dur = beats * this.beatSec;
+          this.playStageNote(NOTE[noteName], dur, this.nextNoteTime, 0.18);
+          this.nextNoteTime += dur;
+          this.step++;
         }
+
+        clearTimeout(this.timerId);
+        this.timerId = setTimeout(() => this.scheduler(), 40);
       },
 
-      startBgm() {
+      async startBgm() {
         if (!this.enabled) return;
-        const audioCtx = this.ensureContext();
-        if (!audioCtx) return;
+        const audioCtx = await this.unlock();
+        if (!audioCtx || !this.enabled || this.isPlaying) return;
 
-        if (!this.bgmTimer) {
-          const now = audioCtx.currentTime + 0.05;
-          this.nextMelodyTime = now;
-          this.nextBassTime = now;
-          this.bgmTimer = setInterval(() => this.scheduleBgm(), 50);
-        }
-        this.scheduleBgm();
+        this.isPlaying = true;
+        this.nextNoteTime = Math.max(this.nextNoteTime, audioCtx.currentTime + 0.05);
+        this.scheduler();
       },
 
       stopBgm() {
-        if (this.bgmTimer) {
-          clearInterval(this.bgmTimer);
-          this.bgmTimer = null;
-        }
+        this.isPlaying = false;
+        clearTimeout(this.timerId);
+        this.timerId = null;
       },
 
-      setEnabled(value) {
-        this.enabled = Boolean(value);
-        soundStatusLabel.textContent = this.enabled ? 'ON' : 'OFF';
-        if (this.enabled) {
-          this.startBgm();
-          this.playTone(587.33, 0.09, 'sine', 0.06);
-        } else {
-          this.stopBgm();
+      muteImmediately() {
+        this.enabled = false;
+        this.stopBgm();
+        if (this.masterGain && this.ctx) {
+          this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
+          this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
         }
+        if (soundOffRadio) soundOffRadio.checked = true;
+        if (soundStatusLabel) soundStatusLabel.textContent = 'OFF';
+        if (audioHintEl) audioHintEl.textContent = '사운드가 꺼져 있습니다.';
+      },
+
+      async setEnabled(value) {
+        if (!value) {
+          this.muteImmediately();
+          return;
+        }
+
+        this.enabled = true;
+        if (soundOnRadio) soundOnRadio.checked = true;
+        if (soundStatusLabel) soundStatusLabel.textContent = 'ON';
+
+        const audioCtx = await this.unlock();
+        if (audioCtx && this.enabled && audioCtx.state === 'running') {
+          this.playStageNote(NOTE.E5, 0.16, audioCtx.currentTime + 0.01, 0.16);
+          this.playStageNote(NOTE.G5, 0.2, audioCtx.currentTime + 0.1, 0.16);
+        }
+        syncBgmWithGameState();
+      },
+
+      async playSfx(fn) {
+        if (!this.enabled) return;
+        const audioCtx = await this.unlock();
+        if (!audioCtx || !this.enabled || audioCtx.state !== 'running') return;
+        fn(audioCtx);
       },
 
       sfxRotate() {
-        this.playTone(440, 0.055, 'triangle', 0.05, 0, 587.33);
+        this.playSfx((audioCtx) => {
+          this.playStageNote(NOTE.D5, 0.07, audioCtx.currentTime, 0.11);
+        });
       },
 
       sfxDrop() {
-        this.playTone(220, 0.08, 'sine', 0.07, 0, 110);
+        this.playSfx((audioCtx) => {
+          this.playStageNote(NOTE.A4, 0.11, audioCtx.currentTime, 0.14);
+        });
       },
 
       sfxHold() {
-        this.playTone(523.25, 0.06, 'sine', 0.05, 0);
-        this.playTone(659.25, 0.07, 'sine', 0.05, 0.05);
+        this.playSfx((audioCtx) => {
+          this.playStageNote(NOTE.C5, 0.08, audioCtx.currentTime, 0.12);
+          this.playStageNote(NOTE.E5, 0.1, audioCtx.currentTime + 0.06, 0.12);
+        });
       },
 
       sfxClear(lines) {
-        const baseNotes = [523.25, 659.25, 783.99, 1046.5];
-        const count = Math.min(lines, 4);
-        for (let i = 0; i < count; i++) {
-          this.playBell(baseNotes[i], 0.18, 0.07, (this.ctx ? this.ctx.currentTime : 0) + i * 0.065);
-        }
+        this.playSfx((audioCtx) => {
+          const chord = [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].slice(0, Math.min(lines, 4));
+          chord.forEach((freq, idx) => {
+            this.playStageNote(freq, 0.22, audioCtx.currentTime + idx * 0.065, 0.16);
+          });
+        });
+      },
+
+      sfxStageUp() {
+        this.playSfx((audioCtx) => {
+          const fanfare = [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6];
+          fanfare.forEach((freq, idx) => {
+            this.playStageNote(freq, 0.2, audioCtx.currentTime + idx * 0.08, 0.18);
+          });
+        });
+      },
+
+      sfxGrandFinale() {
+        this.playSfx((audioCtx) => {
+          const finale = [
+            [NOTE.C5, 0.14], [NOTE.E5, 0.14], [NOTE.G5, 0.14], [NOTE.C6, 0.36],
+            [NOTE.G5, 0.14], [NOTE.A5, 0.14], [NOTE.B5, 0.14], [NOTE.C6, 0.48],
+          ];
+          let offset = 0;
+          finale.forEach(([freq, dur]) => {
+            this.playStageNote(freq, dur, audioCtx.currentTime + offset, 0.2);
+            offset += dur * 0.9;
+          });
+        });
       },
 
       sfxGameOver() {
         this.stopBgm();
-        const notes = [392.0, 349.23, 329.63, 261.63];
-        notes.forEach((n, idx) => {
-          this.playTone(n, 0.16, 'sawtooth', 0.045, idx * 0.12);
+        this.playSfx((audioCtx) => {
+          const notes = [NOTE.E5, NOTE.D5, NOTE.C5, NOTE.A4];
+          notes.forEach((freq, idx) => {
+            this.playStageNote(freq, 0.2, audioCtx.currentTime + idx * 0.13, 0.15);
+          });
         });
       },
     };
 
-    function syncBgmWithGameState() {
-      if (!soundEngine.enabled) {
-        soundEngine.stopBgm();
-        return;
-      }
-      if (!state.paused && !state.gameOver) {
-        soundEngine.startBgm();
-      } else {
-        soundEngine.stopBgm();
-      }
+    // =========================================================================
+    // 게임 상태 및 스테이지 관리
+    // =========================================================================
+    const state = {
+      stageIndex: 0,
+      cols: BASE_COLS,
+      rows: BASE_ROWS,
+      blockSize: BASE_BLOCK,
+      grid: [],
+      bag: [],
+      nextType: null,
+      holdType: null,
+      canHold: true,
+      current: null,
+      stageLines: 0,
+      totalLines: 0,
+      score: 0,
+      paused: false,
+      gameOver: false,
+      completedAll: false,
+      aiEnabled: false,
+      aiDelay: 35,
+      aiPlan: null,
+      lastAiStep: 0,
+      dropAccumulator: 0,
+      lastFrameTime: 0,
+      particles: Array.from({ length: 24 }, (_, idx) => ({
+        x: ((idx * 37) % BASE_WIDTH),
+        y: ((idx * 53) % BASE_HEIGHT),
+        speed: 18 + (idx % 5) * 9,
+        size: 11 + (idx % 4) * 3,
+      })),
+    };
+
+    function getCurrentStage() {
+      return STAGES[state.stageIndex] || STAGES[0];
     }
 
-    function createEmptyBoard() {
-      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    function createEmptyBoard(cols, rows) {
+      return Array.from({ length: rows }, () => Array(cols).fill(null));
     }
 
     function createBag() {
@@ -832,39 +1264,19 @@
       return SHAPES[type][((rot % 4) + 4) % 4];
     }
 
-    function collides(grid, type, rot, x, y) {
+    function collides(grid, cols, rows, type, rot, x, y) {
       const shape = getMatrix(type, rot);
       for (let r = 0; r < shape.length; r++) {
         for (let c = 0; c < shape[r].length; c++) {
           if (!shape[r][c]) continue;
           const nx = x + c;
           const ny = y + r;
-          if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+          if (nx < 0 || nx >= cols || ny >= rows) return true;
           if (ny >= 0 && grid[ny][nx]) return true;
         }
       }
       return false;
     }
-
-    const state = {
-      grid: createEmptyBoard(),
-      bag: [],
-      nextType: null,
-      holdType: null,
-      canHold: true,
-      current: null,
-      score: 0,
-      lines: 0,
-      level: 1,
-      paused: false,
-      gameOver: false,
-      aiEnabled: false,
-      aiDelay: 45,
-      aiPlan: null,
-      lastAiStep: 0,
-      dropAccumulator: 0,
-      lastFrameTime: 0,
-    };
 
     function drawFromBag() {
       if (state.bag.length === 0) {
@@ -873,11 +1285,34 @@
       return state.bag.pop();
     }
 
+    function syncBgmWithGameState() {
+      if (!soundEngine.enabled) {
+        soundEngine.stopBgm();
+        return;
+      }
+      if (!state.paused && !state.gameOver && !state.completedAll) {
+        soundEngine.startBgm();
+      } else {
+        soundEngine.stopBgm();
+      }
+    }
+
+    function updateStageUi() {
+      const stage = getCurrentStage();
+      stageNameEl.textContent = stage.bannerTitle;
+      stageNameEl.style.color = stage.accentColor;
+      stageGoalEl.textContent = `${state.stageLines} / ${stage.targetLines} 라인`;
+      stageLabelEl.textContent = stage.shortName;
+      stageLinesEl.textContent = `${state.stageLines} / ${stage.targetLines}`;
+      totalLinesEl.textContent = state.totalLines.toLocaleString();
+      scoreEl.textContent = state.score.toLocaleString();
+    }
+
     function spawnPiece(forcedType = null) {
       const type = forcedType || state.nextType || drawFromBag();
       state.nextType = drawFromBag();
       const shape = getMatrix(type, 0);
-      const startX = Math.floor((COLS - shape[0].length) / 2);
+      const startX = Math.floor((state.cols - shape[0].length) / 2);
       const startY = type === 'I' ? -1 : 0;
 
       state.current = {
@@ -889,7 +1324,7 @@
       state.canHold = true;
       state.aiPlan = null;
 
-      if (collides(state.grid, type, 0, startX, startY)) {
+      if (collides(state.grid, state.cols, state.rows, type, 0, startX, startY)) {
         state.gameOver = true;
         state.aiEnabled = false;
         updateAiUi();
@@ -898,23 +1333,44 @@
       }
     }
 
-    function resetGame() {
-      state.grid = createEmptyBoard();
-      state.bag = createBag();
-      state.nextType = drawFromBag();
+    function enterStage(index, keepTotals = false) {
+      const stage = STAGES[index];
+      state.stageIndex = index;
+      state.cols = stage.cols || BASE_COLS;
+      state.rows = stage.rows || BASE_ROWS;
+      state.blockSize = stage.blockSize || BASE_BLOCK;
+      state.grid = createEmptyBoard(state.cols, state.rows);
       state.holdType = null;
       state.canHold = true;
-      state.score = 0;
-      state.lines = 0;
-      state.level = 1;
-      state.paused = false;
-      state.gameOver = false;
+      state.stageLines = 0;
       state.aiPlan = null;
       state.dropAccumulator = 0;
+
+      if (!keepTotals) {
+        state.bag = createBag();
+        state.nextType = drawFromBag();
+        state.totalLines = 0;
+        state.score = 0;
+        state.completedAll = false;
+      } else if (!state.nextType) {
+        state.bag = createBag();
+        state.nextType = drawFromBag();
+      }
+
+      state.paused = false;
+      state.gameOver = false;
       hideOverlay();
-      updateStats();
+      soundEngine.setStage(stage);
+      updateStageUi();
       spawnPiece();
       syncBgmWithGameState();
+    }
+
+    function resetGame() {
+      stopCelebrationVideo();
+      celebrationModal.classList.remove('visible');
+      celebrationModal.setAttribute('aria-hidden', 'true');
+      enterStage(0, false);
     }
 
     function showOverlay(title, desc, btnText) {
@@ -929,7 +1385,7 @@
     }
 
     function togglePause() {
-      if (state.gameOver) return;
+      if (state.gameOver || state.completedAll) return;
       state.paused = !state.paused;
       if (state.paused) {
         showOverlay('일시정지', '계속하려면 재개 버튼을 누르거나 P를 입력하세요.', '계속하기');
@@ -940,21 +1396,11 @@
       syncBgmWithGameState();
     }
 
-    function updateStats() {
-      scoreEl.textContent = state.score.toLocaleString();
-      linesEl.textContent = state.lines.toLocaleString();
-      levelEl.textContent = state.level.toLocaleString();
-    }
-
-    function getDropInterval() {
-      return Math.max(80, 750 - (state.level - 1) * 60);
-    }
-
     function movePiece(dx, dy) {
-      if (!state.current || state.paused || state.gameOver) return false;
+      if (!state.current || state.paused || state.gameOver || state.completedAll) return false;
       const nx = state.current.x + dx;
       const ny = state.current.y + dy;
-      if (!collides(state.grid, state.current.type, state.current.rot, nx, ny)) {
+      if (!collides(state.grid, state.cols, state.rows, state.current.type, state.current.rot, nx, ny)) {
         state.current.x = nx;
         state.current.y = ny;
         return true;
@@ -963,12 +1409,12 @@
     }
 
     function rotatePiece(dir = 1) {
-      if (!state.current || state.paused || state.gameOver) return false;
+      if (!state.current || state.paused || state.gameOver || state.completedAll) return false;
       const nextRot = (state.current.rot + dir + 4) % 4;
       const kicks = [0, -1, 1, -2, 2];
       for (const offset of kicks) {
         const nx = state.current.x + offset;
-        if (!collides(state.grid, state.current.type, nextRot, nx, state.current.y)) {
+        if (!collides(state.grid, state.cols, state.rows, state.current.type, nextRot, nx, state.current.y)) {
           state.current.x = nx;
           state.current.rot = nextRot;
           soundEngine.sfxRotate();
@@ -981,33 +1427,54 @@
     function getGhostY() {
       if (!state.current) return 0;
       let gy = state.current.y;
-      while (!collides(state.grid, state.current.type, state.current.rot, state.current.x, gy + 1)) {
+      while (!collides(state.grid, state.cols, state.rows, state.current.type, state.current.rot, state.current.x, gy + 1)) {
         gy++;
       }
       return gy;
     }
 
+    function handleStageProgression() {
+      const stage = getCurrentStage();
+      if (state.stageLines < stage.targetLines) return;
+
+      if (state.stageIndex + 1 < STAGES.length) {
+        const nextIdx = state.stageIndex + 1;
+        state.score += 500 * (nextIdx + 1);
+        soundEngine.sfxStageUp();
+        enterStage(nextIdx, true);
+      } else {
+        state.completedAll = true;
+        state.aiEnabled = false;
+        updateAiUi();
+        updateStageUi();
+        soundEngine.stopBgm();
+        soundEngine.sfxGrandFinale();
+        openCelebrationVideo();
+      }
+    }
+
     function clearLines() {
       let cleared = 0;
-      for (let r = ROWS - 1; r >= 0; r--) {
+      for (let r = state.rows - 1; r >= 0; r--) {
         if (state.grid[r].every((cell) => cell !== null)) {
           state.grid.splice(r, 1);
-          state.grid.unshift(Array(COLS).fill(null));
+          state.grid.unshift(Array(state.cols).fill(null));
           cleared++;
           r++;
         }
       }
       if (cleared > 0) {
-        state.lines += cleared;
-        state.score += (LINE_SCORES[cleared] || cleared * 200) * state.level;
-        state.level = Math.floor(state.lines / 10) + 1;
-        updateStats();
+        state.stageLines += cleared;
+        state.totalLines += cleared;
+        state.score += (LINE_SCORES[cleared] || cleared * 200) * (state.stageIndex + 1);
         soundEngine.sfxClear(cleared);
+        updateStageUi();
+        handleStageProgression();
       }
     }
 
     function lockPiece() {
-      if (!state.current) return;
+      if (!state.current || state.completedAll) return;
       const { type, rot, x, y } = state.current;
       const shape = getMatrix(type, rot);
       for (let r = 0; r < shape.length; r++) {
@@ -1015,29 +1482,31 @@
           if (!shape[r][c]) continue;
           const ny = y + r;
           const nx = x + c;
-          if (ny >= 0 && ny < ROWS && nx >= 0 && nx < COLS) {
+          if (ny >= 0 && ny < state.rows && nx >= 0 && nx < state.cols) {
             state.grid[ny][nx] = type;
           }
         }
       }
       clearLines();
-      spawnPiece();
+      if (!state.completedAll && !state.gameOver) {
+        spawnPiece();
+      }
     }
 
     function hardDrop() {
-      if (!state.current || state.paused || state.gameOver) return;
+      if (!state.current || state.paused || state.gameOver || state.completedAll) return;
       let dropDistance = 0;
       while (movePiece(0, 1)) {
         dropDistance++;
       }
       state.score += dropDistance * 2;
-      updateStats();
+      updateStageUi();
       soundEngine.sfxDrop();
       lockPiece();
     }
 
     function holdPiece() {
-      if (!state.current || !state.canHold || state.paused || state.gameOver) return;
+      if (!state.current || !state.canHold || state.paused || state.gameOver || state.completedAll) return;
       const currentType = state.current.type;
       if (state.holdType) {
         const swapType = state.holdType;
@@ -1052,20 +1521,20 @@
     }
 
     // =========================================================================
-    // AI 에이전트: 휴리스틱 보드 평가 + 최적 착지 탐색
+    // AI 에이전트: 현재 보드 크기(5x10 / 10x20 / 20x40) 대응 최적 착지 탐색
     // =========================================================================
     function cloneGrid(grid) {
       return grid.map((row) => row.slice());
     }
 
-    function simulatePlacement(baseGrid, type, rot, targetX) {
+    function simulatePlacement(baseGrid, cols, rows, type, rot, targetX) {
       const shape = getMatrix(type, rot);
       let y = type === 'I' ? -1 : 0;
 
-      if (collides(baseGrid, type, rot, targetX, y)) {
+      if (collides(baseGrid, cols, rows, type, rot, targetX, y)) {
         return null;
       }
-      while (!collides(baseGrid, type, rot, targetX, y + 1)) {
+      while (!collides(baseGrid, cols, rows, type, rot, targetX, y + 1)) {
         y++;
       }
 
@@ -1076,36 +1545,36 @@
           const ny = y + r;
           const nx = targetX + c;
           if (ny < 0) return null;
-          if (ny < ROWS && nx >= 0 && nx < COLS) {
+          if (ny < rows && nx >= 0 && nx < cols) {
             nextGrid[ny][nx] = type;
           }
         }
       }
 
       let linesCleared = 0;
-      for (let r = ROWS - 1; r >= 0; r--) {
+      for (let r = rows - 1; r >= 0; r--) {
         if (nextGrid[r].every((cell) => cell !== null)) {
           nextGrid.splice(r, 1);
-          nextGrid.unshift(Array(COLS).fill(null));
+          nextGrid.unshift(Array(cols).fill(null));
           linesCleared++;
           r++;
         }
       }
 
-      return { grid: nextGrid, linesCleared, finalY: y };
+      return { grid: nextGrid, linesCleared };
     }
 
-    function evaluateGrid(grid, linesCleared) {
-      const heights = Array(COLS).fill(0);
+    function evaluateGrid(grid, cols, rows, linesCleared) {
+      const heights = Array(cols).fill(0);
       let holes = 0;
       let aggregateHeight = 0;
 
-      for (let c = 0; c < COLS; c++) {
+      for (let c = 0; c < cols; c++) {
         let blockFound = false;
-        for (let r = 0; r < ROWS; r++) {
+        for (let r = 0; r < rows; r++) {
           if (grid[r][c] !== null) {
             if (!blockFound) {
-              heights[c] = ROWS - r;
+              heights[c] = rows - r;
               aggregateHeight += heights[c];
               blockFound = true;
             }
@@ -1116,32 +1585,32 @@
       }
 
       let bumpiness = 0;
-      for (let c = 0; c < COLS - 1; c++) {
+      for (let c = 0; c < cols - 1; c++) {
         bumpiness += Math.abs(heights[c] - heights[c + 1]);
       }
 
       const maxHeight = Math.max(...heights);
 
       return (
-        linesCleared * 760 -
-        holes * 420 -
-        aggregateHeight * 5.2 -
+        linesCleared * 780 -
+        holes * 440 -
+        aggregateHeight * (104 / rows) -
         bumpiness * 18 -
         maxHeight * 12
       );
     }
 
-    function findBestMoveForType(grid, type) {
+    function findBestMoveForType(grid, cols, rows, type) {
       let best = null;
       for (let rot = 0; rot < 4; rot++) {
         const shape = getMatrix(type, rot);
         const minX = -shape[0].length;
-        const maxX = COLS;
+        const maxX = cols;
 
         for (let x = minX; x <= maxX; x++) {
-          const sim = simulatePlacement(grid, type, rot, x);
+          const sim = simulatePlacement(grid, cols, rows, type, rot, x);
           if (!sim) continue;
-          const score = evaluateGrid(sim.grid, sim.linesCleared);
+          const score = evaluateGrid(sim.grid, cols, rows, sim.linesCleared);
           if (!best || score > best.score) {
             best = { rot, x, score };
           }
@@ -1153,14 +1622,14 @@
     function computeAiPlan() {
       if (!state.current) return null;
 
-      const currentBest = findBestMoveForType(state.grid, state.current.type);
+      const currentBest = findBestMoveForType(state.grid, state.cols, state.rows, state.current.type);
       let useHold = false;
       let chosenBest = currentBest;
 
       if (state.canHold) {
         const holdCandidateType = state.holdType || state.nextType;
         if (holdCandidateType) {
-          const holdBest = findBestMoveForType(state.grid, holdCandidateType);
+          const holdBest = findBestMoveForType(state.grid, state.cols, state.rows, holdCandidateType);
           if (holdBest && (!chosenBest || holdBest.score - 25 > chosenBest.score)) {
             chosenBest = holdBest;
             useHold = true;
@@ -1177,7 +1646,7 @@
     }
 
     function stepAi(now) {
-      if (!state.aiEnabled || state.paused || state.gameOver || !state.current) return;
+      if (!state.aiEnabled || state.paused || state.gameOver || state.completedAll || !state.current) return;
       if (now - state.lastAiStep < state.aiDelay) return;
       state.lastAiStep = now;
 
@@ -1213,48 +1682,89 @@
     }
 
     // =========================================================================
-    // 렌더링
+    // 월별 테마 배경/이모지/블록 렌더링
     // =========================================================================
+    function updateParticles(dt) {
+      for (const p of state.particles) {
+        p.y += (p.speed * dt) / 1000;
+        if (p.y > BASE_HEIGHT + 20) {
+          p.y = -16;
+        }
+      }
+    }
+
     function drawCell(context, x, y, size, color, alpha = 1) {
+      const stage = getCurrentStage();
       context.save();
       context.globalAlpha = alpha;
       context.fillStyle = color;
-      context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+      const pad = size >= 24 ? 1 : 0.5;
+      context.fillRect(x * size + pad, y * size + pad, size - pad * 2, size - pad * 2);
 
-      context.fillStyle = 'rgba(255, 255, 255, 0.22)';
-      context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+      if (size >= 14) {
+        context.fillStyle = 'rgba(255, 255, 255, 0.24)';
+        context.fillRect(x * size + pad, y * size + pad, size - pad * 2, Math.max(2, size * 0.14));
+      }
+
+      if (size >= 40) {
+        context.globalAlpha = alpha * 0.45;
+        context.font = `${Math.floor(size * 0.42)}px sans-serif`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillStyle = '#111827';
+        context.fillText(stage.motif, (x + 0.5) * size, (y + 0.54) * size);
+      }
       context.restore();
     }
 
     function drawBoard() {
-      ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+      const stage = getCurrentStage();
+      const size = state.blockSize;
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      const grad = ctx.createLinearGradient(0, 0, 0, BASE_HEIGHT);
+      grad.addColorStop(0, stage.bgTop);
+      grad.addColorStop(1, stage.bgBottom);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+
+      // 월별 테마 이모지 파티클
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      for (const p of state.particles) {
+        ctx.font = `${p.size}px sans-serif`;
+        ctx.fillText(stage.motif, p.x, p.y);
+      }
+      ctx.restore();
+
+      // 격자선
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.lineWidth = 1;
-      for (let c = 1; c < COLS; c++) {
+      for (let c = 1; c < state.cols; c++) {
         ctx.beginPath();
-        ctx.moveTo(c * BLOCK, 0);
-        ctx.lineTo(c * BLOCK, boardCanvas.height);
+        ctx.moveTo(c * size, 0);
+        ctx.lineTo(c * size, BASE_HEIGHT);
         ctx.stroke();
       }
-      for (let r = 1; r < ROWS; r++) {
+      for (let r = 1; r < state.rows; r++) {
         ctx.beginPath();
-        ctx.moveTo(0, r * BLOCK);
-        ctx.lineTo(boardCanvas.width, r * BLOCK);
+        ctx.moveTo(0, r * size);
+        ctx.lineTo(BASE_WIDTH, r * size);
         ctx.stroke();
       }
 
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
+      // 고정된 블록
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
           const cell = state.grid[r][c];
           if (cell) {
-            drawCell(ctx, c, r, BLOCK, COLORS[cell]);
+            drawCell(ctx, c, r, size, COLORS[cell]);
           }
         }
       }
 
       if (!state.current) return;
 
+      // 고스트 피스
       const ghostY = getGhostY();
       const shape = getMatrix(state.current.type, state.current.rot);
       const color = COLORS[state.current.type];
@@ -1268,20 +1778,21 @@
             ctx.save();
             ctx.strokeStyle = color;
             ctx.globalAlpha = 0.35;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(gx * BLOCK + 2, gy * BLOCK + 2, BLOCK - 4, BLOCK - 4);
+            ctx.lineWidth = size >= 24 ? 2 : 1;
+            ctx.strokeRect(gx * size + 1.5, gy * size + 1.5, size - 3, size - 3);
             ctx.restore();
           }
         }
       }
 
+      // 현재 떨어지는 블록
       for (let r = 0; r < shape.length; r++) {
         for (let c = 0; c < shape[r].length; c++) {
           if (!shape[r][c]) continue;
           const px = state.current.x + c;
           const py = state.current.y + r;
           if (py >= 0) {
-            drawCell(ctx, px, py, BLOCK, color);
+            drawCell(ctx, px, py, size, color);
           }
         }
       }
@@ -1291,7 +1802,7 @@
       context.clearRect(0, 0, canvas.width, canvas.height);
       if (!type) return;
       const shape = SHAPES[type][0];
-      const cellSize = 15;
+      const cellSize = 14;
       const offsetX = (canvas.width - shape[0].length * cellSize) / 2 / cellSize;
       const offsetY = (canvas.height - shape.length * cellSize) / 2 / cellSize;
 
@@ -1307,6 +1818,108 @@
       drawBoard();
       drawMiniPiece(holdCtx, holdCanvas, state.holdType);
       drawMiniPiece(nextCtx, nextCanvas, state.nextType);
+    }
+
+    // =========================================================================
+    // 최종 클리어 축하 애니메이션 영상
+    // =========================================================================
+    let celebAnimId = null;
+    let celebStartTime = 0;
+    const confetti = Array.from({ length: 65 }, (_, i) => ({
+      x: (i * 29) % celebrationVideo.width,
+      y: -((i * 19) % celebrationVideo.height),
+      vy: 45 + (i % 6) * 18,
+      vx: ((i % 5) - 2) * 14,
+      size: 5 + (i % 5),
+      color: ['#38bdf8', '#facc15', '#c084fc', '#4ade80', '#f87171', '#fb923c'][i % 6],
+      rot: i * 0.4,
+    }));
+
+    function drawCelebrationFrame(now) {
+      if (!celebStartTime) celebStartTime = now;
+      const elapsed = (now - celebStartTime) / 1000;
+      const w = celebrationVideo.width;
+      const h = celebrationVideo.height;
+
+      const bg = celebCtx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, '#101d3b');
+      bg.addColorStop(1, '#070b14');
+      celebCtx.fillStyle = bg;
+      celebCtx.fillRect(0, 0, w, h);
+
+      // 빛나는 별 & 링
+      const pulse = 1 + Math.sin(elapsed * 5) * 0.08;
+      celebCtx.save();
+      celebCtx.translate(w / 2, h * 0.43);
+      celebCtx.scale(pulse, pulse);
+
+      celebCtx.strokeStyle = 'rgba(250, 204, 21, 0.35)';
+      celebCtx.lineWidth = 3;
+      celebCtx.beginPath();
+      celebCtx.arc(0, 0, 72, 0, Math.PI * 2);
+      celebCtx.stroke();
+
+      celebCtx.font = '56px sans-serif';
+      celebCtx.textAlign = 'center';
+      celebCtx.textBaseline = 'middle';
+      celebCtx.fillText('🏆', 0, 2);
+      celebCtx.restore();
+
+      // 춤추는 월간 이모지들
+      const badges = ['❄️', '🌸', '☀️', '🍂', '🎄', '🐘', '🐜'];
+      badges.forEach((em, idx) => {
+        const angle = elapsed * 1.4 + (idx * Math.PI * 2) / badges.length;
+        const bx = w / 2 + Math.cos(angle) * 145;
+        const by = h * 0.44 + Math.sin(angle) * 58;
+        celebCtx.font = '24px sans-serif';
+        celebCtx.textAlign = 'center';
+        celebCtx.textBaseline = 'middle';
+        celebCtx.fillText(em, bx, by);
+      });
+
+      // 컨페티
+      for (const c of confetti) {
+        c.y += c.vy * 0.016;
+        c.x += Math.sin(elapsed * 3 + c.rot) * 0.8 + c.vx * 0.016;
+        if (c.y > h + 15) {
+          c.y = -12;
+          c.x = (c.x + w) % w;
+        }
+        celebCtx.save();
+        celebCtx.translate(c.x, c.y);
+        celebCtx.rotate(elapsed * 3 + c.rot);
+        celebCtx.fillStyle = c.color;
+        celebCtx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.65);
+        celebCtx.restore();
+      }
+
+      // 축하 자막
+      celebCtx.fillStyle = '#ffffff';
+      celebCtx.font = 'bold 20px sans-serif';
+      celebCtx.textAlign = 'center';
+      celebCtx.fillText('ALL CLEAR! 1월~12월 & 2배 챌린지 완주!', w / 2, h - 42);
+
+      celebCtx.fillStyle = '#93c5fd';
+      celebCtx.font = '14px sans-serif';
+      celebCtx.fillText(`총 점수: ${state.score.toLocaleString()}점 · 총 클리어: ${state.totalLines}라인`, w / 2, h - 18);
+
+      celebAnimId = requestAnimationFrame(drawCelebrationFrame);
+    }
+
+    function stopCelebrationVideo() {
+      if (celebAnimId) {
+        cancelAnimationFrame(celebAnimId);
+        celebAnimId = null;
+      }
+    }
+
+    function openCelebrationVideo() {
+      celebrationSummaryEl.textContent = `총 ${state.totalLines}라인 클리어, 최종 점수 ${state.score.toLocaleString()}점을 달성했습니다!`;
+      celebrationModal.classList.add('visible');
+      celebrationModal.setAttribute('aria-hidden', 'false');
+      celebStartTime = performance.now();
+      stopCelebrationVideo();
+      celebAnimId = requestAnimationFrame(drawCelebrationFrame);
     }
 
     // =========================================================================
@@ -1327,7 +1940,7 @@
     }
 
     function toggleAi() {
-      if (state.gameOver) return;
+      if (state.gameOver || state.completedAll) return;
       state.aiEnabled = !state.aiEnabled;
       state.aiPlan = null;
       state.lastAiStep = performance.now();
@@ -1340,12 +1953,14 @@
       const dt = now - state.lastFrameTime;
       state.lastFrameTime = now;
 
-      if (!state.paused && !state.gameOver) {
+      updateParticles(dt);
+
+      if (!state.paused && !state.gameOver && !state.completedAll) {
         stepAi(now);
 
         if (!state.aiEnabled) {
           state.dropAccumulator += dt;
-          const interval = getDropInterval();
+          const interval = getCurrentStage().dropInterval;
           if (state.dropAccumulator >= interval) {
             state.dropAccumulator = 0;
             if (!movePiece(0, 1)) {
@@ -1362,13 +1977,31 @@
     soundOnRadio.addEventListener('change', () => {
       if (soundOnRadio.checked) {
         soundEngine.setEnabled(true);
-        syncBgmWithGameState();
       }
+    });
+
+    soundOffRadio.addEventListener('click', () => {
+      soundEngine.muteImmediately();
     });
 
     soundOffRadio.addEventListener('change', () => {
       if (soundOffRadio.checked) {
-        soundEngine.setEnabled(false);
+        soundEngine.muteImmediately();
+      }
+    });
+
+    document.addEventListener('pointerdown', (e) => {
+      if (
+        e.target &&
+        (e.target.closest('#soundOffRadio') ||
+          e.target.closest('label[for="soundOffRadio"]') ||
+          e.target.closest('.radio-option')?.querySelector('#soundOffRadio')?.checked)
+      ) {
+        soundEngine.muteImmediately();
+        return;
+      }
+      if (soundEngine.enabled && !state.paused && !state.gameOver && !state.completedAll) {
+        soundEngine.startBgm();
       }
     });
 
@@ -1377,7 +2010,7 @@
         e.preventDefault();
       }
 
-      if (soundEngine.enabled && !state.paused && !state.gameOver) {
+      if (soundEngine.enabled && !state.paused && !state.gameOver && !state.completedAll) {
         soundEngine.startBgm();
       }
 
@@ -1394,7 +2027,7 @@
         resetGame();
         return;
       }
-      if (state.paused || state.gameOver) return;
+      if (state.paused || state.gameOver || state.completedAll) return;
 
       if (e.key === 'ArrowLeft') {
         state.aiEnabled = false;
@@ -1409,7 +2042,7 @@
         updateAiUi();
         if (movePiece(0, 1)) {
           state.score += 1;
-          updateStats();
+          updateStageUi();
         }
       } else if (e.key === 'ArrowUp' || key === 'x') {
         state.aiEnabled = false;
@@ -1441,6 +2074,13 @@
       state.aiDelay = Number(e.target.value);
       aiSpeedVal.textContent = `${state.aiDelay}ms`;
     });
+
+    replayCelebrationBtn.addEventListener('click', () => {
+      celebStartTime = performance.now();
+      soundEngine.sfxGrandFinale();
+    });
+
+    playAgainFromEndBtn.addEventListener('click', resetGame);
 
     resetGame();
     requestAnimationFrame(loop);
