@@ -29,7 +29,7 @@
       background: radial-gradient(circle at top, #182234 0%, var(--bg) 68%);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
-      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -51,6 +51,8 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
+      width: fit-content;
+      max-width: 100%;
     }
 
     .board-container {
@@ -67,6 +69,8 @@
       background: #0b1018;
       border-radius: 8px;
       touch-action: none;
+      width: 300px;
+      height: 600px;
     }
 
     .stage-banner {
@@ -96,7 +100,6 @@
       white-space: nowrap;
     }
 
-    /* 모바일 & 터치 조종 키 패드 */
     .touch-pad {
       width: 100%;
       max-width: 324px;
@@ -120,14 +123,14 @@
 
     .pad-btn {
       width: 100%;
-      min-height: 48px;
-      padding: 8px 6px;
+      min-height: 46px;
+      padding: 7px 6px;
       margin-bottom: 0;
       border-radius: 10px;
       background: #21262d;
       border: 1px solid #38414c;
       color: var(--text);
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -443,17 +446,48 @@
 
     @media (max-width: 600px) {
       body {
-        padding: 10px;
+        padding: 8px;
         align-items: flex-start;
       }
 
       .app {
-        gap: 12px;
+        gap: 10px;
+      }
+
+      .board-container {
+        padding: 8px;
+      }
+
+      .stage-banner {
+        padding: 5px 8px;
+        margin-bottom: 6px;
+        font-size: 0.76rem;
+      }
+
+      /* 보드 높이를 축소해 방향키가 화면 아래로 밀리지 않고 함께 보이게 배치 */
+      canvas#board {
+        width: min(210px, 52vw);
+        height: min(420px, 46dvh);
+      }
+
+      .touch-pad {
+        max-width: min(320px, 94vw);
+        padding: 8px;
+        gap: 6px;
+      }
+
+      .pad-btn {
+        min-height: 44px;
+        font-size: 0.85rem;
       }
 
       .sidebar {
-        width: 100%;
-        max-width: 324px;
+        width: min(320px, 94vw);
+        gap: 8px;
+      }
+
+      .card {
+        padding: 10px 12px;
       }
     }
   </style>
@@ -1084,9 +1118,6 @@
     const btnSoftDrop = document.getElementById('btnSoftDrop');
     const btnHardDrop = document.getElementById('btnHardDrop');
 
-    // =========================================================================
-    // 모바일 호환 Web Audio 엔진 (터치/포인터 언락 + 즉시 음소거)
-    // =========================================================================
     const soundEngine = {
       enabled: true,
       isPlaying: false,
@@ -1328,9 +1359,6 @@
       },
     };
 
-    // =========================================================================
-    // 게임 상태 및 스테이지 관리
-    // =========================================================================
     const state = {
       stageIndex: 0,
       cols: BASE_COLS,
@@ -1646,9 +1674,6 @@
       }
     }
 
-    // =========================================================================
-    // AI 에이전트
-    // =========================================================================
     function cloneGrid(grid) {
       return grid.map((row) => row.slice());
     }
@@ -1807,9 +1832,6 @@
       hardDrop();
     }
 
-    // =========================================================================
-    // 렌더링
-    // =========================================================================
     function updateParticles(dt) {
       for (const p of state.particles) {
         p.y += (p.speed * dt) / 1000;
@@ -1941,9 +1963,6 @@
       drawMiniPiece(nextCtx, nextCanvas, state.nextType);
     }
 
-    // =========================================================================
-    // 최종 클리어 축하 애니메이션 영상
-    // =========================================================================
     let celebAnimId = null;
     let celebStartTime = 0;
     const confetti = Array.from({ length: 65 }, (_, i) => ({
@@ -2039,9 +2058,6 @@
       celebAnimId = requestAnimationFrame(drawCelebrationFrame);
     }
 
-    // =========================================================================
-    // 메인 루프 및 입력 핸들러 (모바일 터치 + 키보드)
-    // =========================================================================
     function updateAiUi() {
       if (state.aiEnabled) {
         toggleAiBtn.textContent = 'AI 에이전트 끄기 (A)';
@@ -2134,7 +2150,6 @@
     document.addEventListener('touchstart', handleGlobalUserInteraction, { passive: true });
     document.addEventListener('pointerdown', handleGlobalUserInteraction, { passive: true });
 
-    // 모바일 조종 키 반복/단발 바인딩
     function bindHoldablePadButton(btn, actionFn, repeatMs = 110) {
       let repeatTimer = null;
       let startDelayTimer = null;
@@ -2165,7 +2180,7 @@
               }
               actionFn();
             }, repeatMs);
-          }, 190);
+          }, 180);
         }
       };
 
@@ -2175,8 +2190,8 @@
       btn.addEventListener('pointercancel', clearTimers);
     }
 
-    bindHoldablePadButton(btnLeft, () => movePiece(-1, 0), 105);
-    bindHoldablePadButton(btnRight, () => movePiece(1, 0), 105);
+    bindHoldablePadButton(btnLeft, () => movePiece(-1, 0), 100);
+    bindHoldablePadButton(btnRight, () => movePiece(1, 0), 100);
     bindHoldablePadButton(btnRotate, () => rotatePiece(1), 0);
     bindHoldablePadButton(btnHold, () => holdPiece(), 0);
     bindHoldablePadButton(
@@ -2190,6 +2205,77 @@
       65
     );
     bindHoldablePadButton(btnHardDrop, () => hardDrop(), 0);
+
+    // 보드 위 직접 터치 스와이프 & 탭 조작
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let lastSwipeStepX = 0;
+    let swipeMoved = false;
+
+    boardCanvas.addEventListener(
+      'touchstart',
+      (e) => {
+        if (!e.touches || e.touches.length === 0) return;
+        primeMobileAudio();
+        if (state.paused || state.gameOver || state.completedAll) return;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        lastSwipeStepX = 0;
+        swipeMoved = false;
+      },
+      { passive: true }
+    );
+
+    boardCanvas.addEventListener(
+      'touchmove',
+      (e) => {
+        if (!e.touches || e.touches.length === 0) return;
+        if (state.paused || state.gameOver || state.completedAll) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        const stepPx = 22;
+        const targetStepX = Math.trunc(dx / stepPx);
+
+        if (targetStepX !== lastSwipeStepX) {
+          disableAiForManualInput();
+          const diff = targetStepX - lastSwipeStepX;
+          for (let i = 0; i < Math.abs(diff); i++) {
+            movePiece(diff > 0 ? 1 : -1, 0);
+          }
+          lastSwipeStepX = targetStepX;
+          swipeMoved = true;
+        } else if (dy > 48 && Math.abs(dx) < 36) {
+          disableAiForManualInput();
+          swipeMoved = true;
+          touchStartY = t.clientY;
+          hardDrop();
+        }
+      },
+      { passive: false }
+    );
+
+    boardCanvas.addEventListener(
+      'touchend',
+      (e) => {
+        if (state.paused || state.gameOver || state.completedAll) return;
+        const changed = e.changedTouches && e.changedTouches[0];
+        if (!changed) return;
+        const dx = changed.clientX - touchStartX;
+        const dy = changed.clientY - touchStartY;
+
+        if (!swipeMoved && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+          disableAiForManualInput();
+          rotatePiece(1);
+        } else if (!swipeMoved && dy < -28 && Math.abs(dx) < 36) {
+          disableAiForManualInput();
+          rotatePiece(1);
+        }
+      },
+      { passive: true }
+    );
 
     document.addEventListener('keydown', (e) => {
       if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', 'Space', ' '].includes(e.key)) {
